@@ -1,6 +1,14 @@
 # main.py
 import pygame
 import sys
+from game_manager import GameManager
+from config import Config
+import gi
+
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
+from gettext import gettext as _
 
 class main:
     def __init__(self, journal=True):
@@ -13,7 +21,7 @@ class main:
 
     def set_canvas(self, canvas):
         self.canvas = canvas
-        pygame.display.set_caption(("Four Color Map Puzzle"))
+        pygame.display.set_caption(_("Four Color Map Puzzle"))
 
     def write_file(self, file_path):
         pass
@@ -23,7 +31,7 @@ class main:
 
     def quit(self):
         self.running = False
-
+    
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -37,32 +45,47 @@ class main:
                     self.game.handle_event(event)
 
     def run(self):
+        # Initialize pygame
         pygame.init()
-        screen = pygame.display.set_mode((800, 600))
-        pygame.display.set_caption("Four Color Map Puzzle")
         
-        # Set up font and text
-        font = pygame.font.Font(None, 36)
-        text = font.render("Hello, Four Color Map!", True, (255, 255, 255))
-        text_rect = text.get_rect(center=(400, 300))
+        # Initialize the game
+        self.game = GameManager()
         
+        # Set canvas focus if available
+        if self.canvas is not None:
+            self.canvas.grab_focus()
+        
+        # Main game loop
+        clock = pygame.time.Clock()
         
         while self.running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.running = False
+            # Handle GTK events for Sugar integration
+            if self.journal:
+                # Pump GTK messages
+                while Gtk.events_pending():
+                    Gtk.main_iteration()
             
-            # Clear screen
-            screen.fill((0, 0, 0))
+            dt = clock.tick(Config.FPS)
             
-            # Draw text
-            screen.blit(text, text_rect)
+            # Handle pygame events
+            self.check_events()
             
+            # Update game state
+            if self.game:
+                self.game.update(dt)
+                
+                # Render everything
+                self.game.render()
+                
             pygame.display.flip()
         
+        # Clean up
+        pygame.display.quit()
         pygame.quit()
         sys.exit(0)
 
 if __name__ == "__main__":
+    pygame.init()
+    pygame.display.set_mode((Config.SCREEN_WIDTH, Config.SCREEN_HEIGHT))
     game_instance = main(journal=False)
     game_instance.run()
