@@ -1,0 +1,8 @@
+[Activity]
+name = FourColorMap
+activity_version = 1
+bundle_id = org.sugarlabs.FourColorMap
+exec = sugar-activity3 activity.FourColorMap
+icon = activity-fourcolormap
+license = GPLv2+
+repository = https://github.com/Bishoywadea/Four-Color.git
