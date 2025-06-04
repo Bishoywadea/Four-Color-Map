@@ -7,9 +7,13 @@ class main:
         self.journal = journal
         self.running = True
         self.canvas = None
+        self.score = [0, 0]
+        self.show_help = False
+        self.game = None
 
     def set_canvas(self, canvas):
         self.canvas = canvas
+        pygame.display.set_caption(("Four Color Map Puzzle"))
 
     def write_file(self, file_path):
         pass
@@ -19,6 +23,18 @@ class main:
 
     def quit(self):
         self.running = False
+
+    def check_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.VIDEORESIZE:
+                pygame.display.set_mode(event.size, pygame.RESIZABLE)
+                break
+            else:
+                # Pass event to game manager
+                if self.game:
+                    self.game.handle_event(event)
 
     def run(self):
         pygame.init()
