@@ -2,13 +2,36 @@ import pygame
 from config import Config
 
 class Button:
-    def __init__(self, x, y, width, height, color, text="", callback=None):
+    def __init__(self, x, y, width, height, color, text="", callback=None, icon_char=None, icon_path=None):
         self.rect = pygame.Rect(x, y, width, height)
         self.color = color
         self.text = text
         self.callback = callback
         self.hovered = False
+        self.icon_char = icon_char
+        self.icon_path = icon_path
+        self.icon_image = None
         
+        # Load icon image if path is provided
+        if self.icon_path:
+            self.load_icon()
+        
+    def load_icon(self):
+        """Load and scale the icon image."""
+        try:
+            # Load the PNG image
+            self.icon_image = pygame.image.load(self.icon_path).convert_alpha()
+            
+            # Calculate icon size (leave some padding)
+            icon_size = min(self.rect.width - 10, self.rect.height - 10)
+            
+            # Scale the image to fit the button
+            self.icon_image = pygame.transform.scale(self.icon_image, (icon_size, icon_size))
+            
+        except pygame.error as e:
+            print(f"Could not load icon {self.icon_path}: {e}")
+            self.icon_image = None
+            
     def handle_event(self, event):
         if event.type == pygame.MOUSEMOTION:
             self.hovered = self.rect.collidepoint(event.pos)
@@ -24,11 +47,23 @@ class Button:
         pygame.draw.rect(surface, color, self.rect)
         pygame.draw.rect(surface, Config.COLORS['BORDER'], self.rect, 2)
         
-        if self.text:
+        # Draw PNG icon if available
+        if self.icon_image:
+            icon_rect = self.icon_image.get_rect(center=self.rect.center)
+            surface.blit(self.icon_image, icon_rect)
+        # Fall back to character icon
+        elif self.icon_char:
+            font = pygame.font.Font(None, int(self.rect.height * 0.6))
+            text_surface = font.render(self.icon_char, True, Config.COLORS['TEXT'])
+            text_rect = text_surface.get_rect(center=self.rect.center)
+            surface.blit(text_surface, text_rect)
+        # Fall back to text
+        elif self.text:
             font = pygame.font.Font(None, 24)
             text_surface = font.render(self.text, True, Config.COLORS['TEXT'])
             text_rect = text_surface.get_rect(center=self.rect.center)
             surface.blit(text_surface, text_rect)
+
 
 class UI:
     def __init__(self, game_manager):
@@ -57,9 +92,11 @@ class UI:
         self.eraser_button = Button(
             eraser_x, button_y,
             Config.COLOR_BUTTON_SIZE, Config.COLOR_BUTTON_SIZE,
-            Config.COLORS['BACKGROUND'],  # Use background color for eraser
-            "X",  # X symbol for eraser
-            callback=self.select_eraser
+            (255, 255, 255),  # White background
+            "",  # No text
+            callback=self.select_eraser,
+            icon_char="✗",  # Fallback character
+            icon_path="assets/eraser.png"
         )
         
         # Action buttons on the right
@@ -91,8 +128,9 @@ class UI:
             undo_x, button_y,
             button_width, Config.COLOR_BUTTON_SIZE,
             Config.COLORS['UI_BACKGROUND'],
-            "Undo",
-            callback=self.game_manager.undo_last_action
+            "",
+            callback=self.game_manager.undo_last_action,
+            icon_char="↶" 
         )
     
     def select_color(self, color_index):
