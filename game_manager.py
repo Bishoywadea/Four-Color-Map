@@ -30,6 +30,7 @@ class GameManager:
         self.ui = None
         self.map_frame = None
         self.current_level = None
+        self.puzzle_valid = False  # Track if the completed puzzle is valid
 
     def start_level(self, level):
         """Start a specific level."""
@@ -40,6 +41,7 @@ class GameManager:
         self.selected_color = 0
         self.start_time = time.time()
         self.game_completed = False
+        self.puzzle_valid = False
         self.ui = UI(self)
         
         # Create map frame centered on screen
@@ -56,7 +58,6 @@ class GameManager:
     def load_map(self, map_data):
         """Load a map from the provided data."""
         self.map_frame.setup_regions(map_data)
-        
     
     def handle_event(self, event):
         """Handle game events."""
@@ -80,7 +81,6 @@ class GameManager:
                     region_id = self.map_frame.detect_click(event.pos)
                     if region_id is not None:
                         self.color_region(region_id, self.selected_color)
-                
     
     def return_to_menu(self):
         """Return to the main menu."""
@@ -88,49 +88,47 @@ class GameManager:
         self.menu.selected_level = None
         
     def color_region(self, region_id, color_index):
-        """Color a region with the specified color."""
+        """Color a region with the specified color - no validation."""
         if region_id not in self.map_frame.regions:
             return False
         
         region = self.map_frame.regions[region_id]
         new_color = Config.GAME_COLORS[color_index]
         
-        # Check if this coloring is valid
-        if self.is_valid_coloring(region_id, color_index):
-            region.set_color(new_color)
+        # Just color it without checking validity
+        region.set_color(new_color)
+        
+        # Check if all regions are colored
+        if self.are_all_regions_colored():
             self.check_completion()
-            return True
-        
-        return False
-    
-    def is_valid_coloring(self, region_id, color_index):
-        """Check if coloring a region with the given color is valid."""
-        region = self.map_frame.regions[region_id]
-        new_color = Config.GAME_COLORS[color_index]
-        
-        # Check all neighbors
-        for neighbor_id in region.neighbors:
-            neighbor = self.map_frame.regions[neighbor_id]
-            if neighbor.color == new_color:
-                return False
+        else:
+            # Reset completion state if puzzle is being modified
+            self.game_completed = False
+            self.puzzle_valid = False
         
         return True
     
-    def check_completion(self):
-        """Check if the puzzle is completed."""
-        # All regions must be colored
+    def are_all_regions_colored(self):
+        """Check if all regions have been colored."""
         for region in self.map_frame.regions.values():
             if region.color is None:
                 return False
+        return True
+    
+    def check_completion(self):
+        """Check if the puzzle is completed and valid."""
+        # Mark as completed since all regions are colored
+        self.game_completed = True
         
-        # All colorings must be valid
+        # Check if the coloring is valid
+        self.puzzle_valid = True
         for region in self.map_frame.regions.values():
             for neighbor_id in region.neighbors:
                 neighbor = self.map_frame.regions[neighbor_id]
                 if region.color == neighbor.color:
+                    self.puzzle_valid = False
                     return False
         
-        self.game_completed = True
         return True
     
     def get_elapsed_time(self):
@@ -146,6 +144,7 @@ class GameManager:
                 region.set_color(None)
         self.start_time = time.time()
         self.game_completed = False
+        self.puzzle_valid = False
     
     def update(self, dt):
         """Update game state."""
@@ -180,15 +179,22 @@ class GameManager:
             self.draw_menu_hint()
     
     def draw_completion_message(self):
-        """Draw completion message."""
+        """Draw completion message - shows if puzzle is valid or not."""
         font = pygame.font.Font(None, 48)
-        text = font.render("Puzzle Completed!", True, Config.COLORS['TEXT'])
+        
+        if self.puzzle_valid:
+            text = font.render("Puzzle Completed Successfully!", True, Config.COLORS['TEXT'])
+            color = (0, 255, 0)  # Green for success
+        else:
+            text = font.render("Invalid Solution - Adjacent regions have same color!", True, Config.COLORS['TEXT'])
+            color = (255, 0, 0)  # Red for invalid
+        
         text_rect = text.get_rect(center=(Config.SCREEN_WIDTH // 2, 50))
         
         # Draw background for text
         bg_rect = text_rect.inflate(20, 10)
         pygame.draw.rect(self.screen, Config.COLORS['UI_BACKGROUND'], bg_rect)
-        pygame.draw.rect(self.screen, Config.COLORS['BORDER'], bg_rect, 2)
+        pygame.draw.rect(self.screen, color, bg_rect, 3)  # Border color indicates validity
         
         self.screen.blit(text, text_rect)
         
@@ -200,9 +206,12 @@ class GameManager:
         time_rect = time_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 100))
         self.screen.blit(time_text, time_rect)
         
-        # Draw return to menu message
+        # Draw appropriate message
         font_small = pygame.font.Font(None, 32)
-        menu_text = font_small.render("Press ESC to return to menu", True, Config.COLORS['TEXT'])
+        if self.puzzle_valid:
+            menu_text = font_small.render("Press ESC to return to menu", True, Config.COLORS['TEXT'])
+        else:
+            menu_text = font_small.render("Keep trying! Change colors to fix conflicts", True, Config.COLORS['TEXT'])
         menu_rect = menu_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
         self.screen.blit(menu_text, menu_rect)
     
