@@ -108,7 +108,8 @@ class UI:
             button_width, Config.COLOR_BUTTON_SIZE,
             Config.COLORS['UI_BACKGROUND'],
             "Menu",
-            callback=self.game_manager.return_to_menu
+            callback=self.game_manager.return_to_menu,
+            icon_path="assets/menu.png"
         )
         
         # Reset button
@@ -118,7 +119,8 @@ class UI:
             button_width, Config.COLOR_BUTTON_SIZE,
             Config.COLORS['UI_BACKGROUND'],
             "Reset",
-            callback=self.game_manager.reset_game
+            callback=self.game_manager.reset_game,
+            icon_path="assets/reset.png"
         )
         
         # Undo button
@@ -129,7 +131,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "",
             callback=self.game_manager.undo_last_action,
-            icon_path="assets/eraser.png"
+            icon_path="assets/undo.png"
         )
     
     def select_color(self, color_index):
