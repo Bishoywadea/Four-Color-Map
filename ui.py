@@ -95,7 +95,6 @@ class UI:
             (255, 255, 255),  # White background
             "",  # No text
             callback=self.select_eraser,
-            icon_char="✗",  # Fallback character
             icon_path="assets/eraser.png"
         )
         
@@ -130,7 +129,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "",
             callback=self.game_manager.undo_last_action,
-            icon_char="↶" 
+            icon_path="assets/eraser.png"
         )
     
     def select_color(self, color_index):
