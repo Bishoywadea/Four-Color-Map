@@ -1,27 +1,32 @@
 import pygame
+from config import Config
+from menu import Menu
 
 class GameManager:
     def __init__(self):
-        self.screen = pygame.display.get_surface()
-        if not self.screen:
-            self.screen = pygame.display.set_mode((800, 600))
+        self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        screen_info = pygame.display.Info()
+        Config.SCREEN_WIDTH = screen_info.current_w
+        Config.SCREEN_HEIGHT = screen_info.current_h
         
-        self.font = pygame.font.Font(None, 72)
-        self.text = self.font.render("Four Color Map", True, (255, 255, 255))
+        pygame.display.set_caption("Four Color Map Puzzle")
         
-        self.update_text_position()
+        # Game states
+        self.STATE_MENU = "menu"
+        self.STATE_PLAYING = "playing"
+        self.current_state = self.STATE_MENU
         
-    def update_text_position(self):
-        """Update text position based on current screen size"""
-        if self.screen:
-            self.width = self.screen.get_width()
-            self.height = self.screen.get_height()
-            self.text_rect = self.text.get_rect(center=(self.width // 2, self.height // 2))
+        # Menu
+        self.menu = Menu(self)
+        
     
     def handle_event(self, event):
         """Handle game events."""
-        if event.type == pygame.VIDEORESIZE:
-            self.update_text_position()
+        if self.current_state == self.STATE_MENU:
+            if self.menu.handle_event(event):
+                # Level was selected
+                self.start_level(self.menu.selected_level)
+                
     
     def update(self, dt):
         """Update game state."""
@@ -29,8 +34,5 @@ class GameManager:
     
     def render(self):
         """Render the game."""
-        self.update_text_position()
-        
-        self.screen.fill((30, 30, 40))
-        
-        self.screen.blit(self.text, self.text_rect)
+        if self.current_state == self.STATE_MENU:
+            self.menu.draw(self.screen)
