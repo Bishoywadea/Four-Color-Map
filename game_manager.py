@@ -32,7 +32,8 @@ class GameManager:
         self.current_level = None
         self.puzzle_valid = False 
         self.eraser_mode = False
-        self.action_history = [] 
+        self.action_history = []
+        self.completion_time = None 
 
     def start_level(self, level):
         """Start a specific level."""
@@ -42,6 +43,7 @@ class GameManager:
         # Initialize game components
         self.selected_color = 0
         self.start_time = time.time()
+        self.completion_time = None
         self.game_completed = False
         self.puzzle_valid = False
         self.ui = UI(self)
@@ -69,12 +71,6 @@ class GameManager:
                 self.start_level(self.menu.selected_level)
 
         elif self.current_state == self.STATE_PLAYING:
-            # Check for ESC key to return to menu
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    self.return_to_menu()
-                    return
-            
             if self.ui.handle_event(event):
                 return  # UI handled the event
             
@@ -145,15 +141,23 @@ class GameManager:
                 neighbor = self.map_frame.regions[neighbor_id]
                 if region.color == neighbor.color:
                     self.puzzle_valid = False
+                    self.completion_time = None 
                     return False
-        
+                
+        if self.puzzle_valid and self.completion_time is None:
+            self.completion_time = time.time()
+
         return True
     
     def get_elapsed_time(self):
         """Get elapsed time in seconds."""
         if self.start_time is None:
             return 0
-        return time.time() - self.start_time
+        
+        if self.completion_time is not None and self.puzzle_valid:
+            return self.completion_time - self.start_time
+        else:
+            return time.time() - self.start_time
     
     def reset_game(self):
         """Reset the game to initial state."""
@@ -161,6 +165,7 @@ class GameManager:
             for region in self.map_frame.regions.values():
                 region.set_color(None)
         self.start_time = time.time()
+        self.completion_time = None
         self.game_completed = False
         self.puzzle_valid = False
         self.action_history = [] 
@@ -195,9 +200,6 @@ class GameManager:
             
             # Draw level name in top-left
             self.draw_level_name()
-            
-            # Draw return to menu hint
-            self.draw_menu_hint()
     
     def draw_completion_message(self):
         """Draw completion message - shows if puzzle is valid or not."""
@@ -223,14 +225,18 @@ class GameManager:
         elapsed = self.get_elapsed_time()
         minutes = int(elapsed // 60)
         seconds = int(elapsed % 60)
-        time_text = font.render(f"Time: {minutes:02d}:{seconds:02d}", True, Config.COLORS['TEXT'])
+        if self.puzzle_valid:
+            time_text = font.render(f"Final Time: {minutes:02d}:{seconds:02d}", True, Config.COLORS['TEXT'])
+        else:
+            time_text = font.render(f"Time: {minutes:02d}:{seconds:02d}", True, Config.COLORS['TEXT'])
+        
         time_rect = time_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 100))
         self.screen.blit(time_text, time_rect)
         
         # Draw appropriate message
         font_small = pygame.font.Font(None, 32)
         if self.puzzle_valid:
-            menu_text = font_small.render("Press ESC to return to menu", True, Config.COLORS['TEXT'])
+            menu_text = font_small.render("Congrats You Solve it Right!", True, Config.COLORS['TEXT'])
         else:
             menu_text = font_small.render("Keep trying! Change colors to fix conflicts", True, Config.COLORS['TEXT'])
         menu_rect = menu_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
@@ -250,13 +256,6 @@ class GameManager:
             
             self.screen.blit(text, text_rect)
     
-    def draw_menu_hint(self):
-        """Draw hint to return to menu."""
-        font = pygame.font.Font(None, 24)
-        text = font.render("ESC - Menu", True, Config.COLORS['TEXT'])
-        text_rect = text.get_rect(topright=(Config.SCREEN_WIDTH - 20, 20))
-        self.screen.blit(text, text_rect)
-
     def undo_last_action(self):
         """Undo the last coloring action."""
         if not self.action_history:
@@ -271,7 +270,8 @@ class GameManager:
         
         if region_id in self.map_frame.regions:
             self.map_frame.regions[region_id].set_color(old_color)
-        
+
+        self.completion_time = None
         # Check completion state again
         if self.are_all_regions_colored():
             self.check_completion()
