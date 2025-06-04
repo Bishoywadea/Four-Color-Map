@@ -41,6 +41,7 @@ class UI:
         # Create color selection buttons
         button_y = Config.SCREEN_HEIGHT - Config.UI_HEIGHT + Config.BUTTON_MARGIN
         
+        # Add color buttons
         for i, color in enumerate(Config.GAME_COLORS):
             button_x = Config.BUTTON_MARGIN + i * (Config.COLOR_BUTTON_SIZE + Config.BUTTON_MARGIN)
             button = Button(
@@ -51,27 +52,58 @@ class UI:
             )
             self.color_buttons.append(button)
         
+        # Add Eraser button (after color buttons)
+        eraser_x = Config.BUTTON_MARGIN + len(Config.GAME_COLORS) * (Config.COLOR_BUTTON_SIZE + Config.BUTTON_MARGIN)
+        self.eraser_button = Button(
+            eraser_x, button_y,
+            Config.COLOR_BUTTON_SIZE, Config.COLOR_BUTTON_SIZE,
+            Config.COLORS['BACKGROUND'],  # Use background color for eraser
+            "X",  # X symbol for eraser
+            callback=self.select_eraser
+        )
+        
+        # Action buttons on the right
+        button_width = 80
+        
+        # Menu button
+        menu_x = Config.SCREEN_WIDTH - button_width - Config.BUTTON_MARGIN
+        self.menu_button = Button(
+            menu_x, button_y,
+            button_width, Config.COLOR_BUTTON_SIZE,
+            Config.COLORS['UI_BACKGROUND'],
+            "Menu",
+            callback=self.game_manager.return_to_menu
+        )
+        
         # Reset button
-        reset_x = Config.SCREEN_WIDTH - 100 - Config.BUTTON_MARGIN
+        reset_x = menu_x - button_width - Config.BUTTON_MARGIN
         self.reset_button = Button(
             reset_x, button_y,
-            100, Config.COLOR_BUTTON_SIZE,
+            button_width, Config.COLOR_BUTTON_SIZE,
             Config.COLORS['UI_BACKGROUND'],
             "Reset",
             callback=self.game_manager.reset_game
         )
-        menu_x = reset_x - 120
-        self.menu_button = Button(
-            menu_x, button_y,
-            100, Config.COLOR_BUTTON_SIZE,
+        
+        # Undo button
+        undo_x = reset_x - button_width - Config.BUTTON_MARGIN
+        self.undo_button = Button(
+            undo_x, button_y,
+            button_width, Config.COLOR_BUTTON_SIZE,
             Config.COLORS['UI_BACKGROUND'],
-            "Menu",
-            callback=self.game_manager.return_to_menu
+            "Undo",
+            callback=self.game_manager.undo_last_action
         )
     
     def select_color(self, color_index):
         """Select a color for painting regions."""
         self.game_manager.selected_color = color_index
+        self.game_manager.eraser_mode = False
+    
+    def select_eraser(self):
+        """Select eraser mode."""
+        self.game_manager.eraser_mode = True
+        self.game_manager.selected_color = -1  # -1 indicates eraser
     
     def handle_event(self, event):
         """Handle UI events."""
@@ -80,10 +112,16 @@ class UI:
             if button.handle_event(event):
                 return True
         
-        # Handle reset button event
+        # Handle eraser button
+        if self.eraser_button.handle_event(event):
+            return True
+        
+        # Handle action buttons
         if self.reset_button.handle_event(event):
             return True
         if self.menu_button.handle_event(event):
+            return True
+        if self.undo_button.handle_event(event):
             return True
         
         return False
@@ -104,19 +142,24 @@ class UI:
         for i, button in enumerate(self.color_buttons):
             button.draw(surface)
             
-            # Draw selection indicator
-            if i == self.game_manager.selected_color:
+            # Draw selection indicator for color buttons
+            if not self.game_manager.eraser_mode and i == self.game_manager.selected_color:
                 pygame.draw.rect(surface, Config.COLORS['BORDER'], button.rect, 4)
         
-        # Draw reset button
+        # Draw eraser button
+        self.eraser_button.draw(surface)
+        
+        # Draw selection indicator for eraser
+        if self.game_manager.eraser_mode:
+            pygame.draw.rect(surface, Config.COLORS['BORDER'], self.eraser_button.rect, 4)
+        
+        # Draw action buttons
         self.reset_button.draw(surface)
+        self.undo_button.draw(surface)
+        self.menu_button.draw(surface)
         
         # Draw timer
         self.draw_timer(surface)
-        
-        # Draw instructions
-        self.menu_button.draw(surface)
-
     
     def draw_timer(self, surface):
         """Draw the game timer."""

@@ -30,7 +30,9 @@ class GameManager:
         self.ui = None
         self.map_frame = None
         self.current_level = None
-        self.puzzle_valid = False  # Track if the completed puzzle is valid
+        self.puzzle_valid = False 
+        self.eraser_mode = False
+        self.action_history = [] 
 
     def start_level(self, level):
         """Start a specific level."""
@@ -88,15 +90,31 @@ class GameManager:
         self.menu.selected_level = None
         
     def color_region(self, region_id, color_index):
-        """Color a region with the specified color - no validation."""
+        """Color a region with the specified color or erase it."""
         if region_id not in self.map_frame.regions:
             return False
         
         region = self.map_frame.regions[region_id]
-        new_color = Config.GAME_COLORS[color_index]
         
-        # Just color it without checking validity
+        # Store the current state for undo
+        old_color = region.color
+        
+        if self.eraser_mode:
+            # Erase the color (set to None)
+            new_color = None
+        else:
+            # Apply the selected color
+            new_color = Config.GAME_COLORS[color_index]
+        
+        # Color the region
         region.set_color(new_color)
+        
+        # Add to action history for undo
+        self.action_history.append({
+            'region_id': region_id,
+            'old_color': old_color,
+            'new_color': new_color
+        })
         
         # Check if all regions are colored
         if self.are_all_regions_colored():
@@ -145,6 +163,9 @@ class GameManager:
         self.start_time = time.time()
         self.game_completed = False
         self.puzzle_valid = False
+        self.action_history = [] 
+        self.eraser_mode = False
+        self.selected_color = 0
     
     def update(self, dt):
         """Update game state."""
@@ -235,3 +256,25 @@ class GameManager:
         text = font.render("ESC - Menu", True, Config.COLORS['TEXT'])
         text_rect = text.get_rect(topright=(Config.SCREEN_WIDTH - 20, 20))
         self.screen.blit(text, text_rect)
+
+    def undo_last_action(self):
+        """Undo the last coloring action."""
+        if not self.action_history:
+            return
+        
+        # Pop the last action
+        last_action = self.action_history.pop()
+        
+        # Restore the previous color
+        region_id = last_action['region_id']
+        old_color = last_action['old_color']
+        
+        if region_id in self.map_frame.regions:
+            self.map_frame.regions[region_id].set_color(old_color)
+        
+        # Check completion state again
+        if self.are_all_regions_colored():
+            self.check_completion()
+        else:
+            self.game_completed = False
+            self.puzzle_valid = False
