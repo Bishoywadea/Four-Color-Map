@@ -73,6 +73,7 @@ class SimpleColorPicker:
                         row = rel_y // (self.cell_size + self.spacing)
                         
                         index = row * self.cols + col
+                        index = int(index)
                         if 0 <= index < len(self.color_options):
                             self.selected_color = self.color_options[index]
                             return True
