@@ -1,7 +1,6 @@
 import pygame
 import time
 from config import Config
-from map_data import get_sample_map
 from ui import UI
 from map_frame import MapFrame
 from menu import Menu

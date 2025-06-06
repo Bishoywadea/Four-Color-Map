@@ -3,3 +3,5 @@
 *.pyo
 dist/
 locale/
+__pycache__/
+mymapenv/
