@@ -82,7 +82,7 @@ class Menu:
         button_height = 80
         button_spacing = 30
         
-        categories = ['Countries', 'Polygons', 'Random']
+        categories = ['Countries', 'Polygons']
         
         # Calculate starting position
         total_width = len(categories) * button_width + (len(categories) - 1) * button_spacing
