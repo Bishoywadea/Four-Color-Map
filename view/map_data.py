@@ -1,5 +1,5 @@
 # map_data.py
-from config import Config
+from view.config import Config
 
 def get_level_1():
     """Level 1: Simple 6-region map."""

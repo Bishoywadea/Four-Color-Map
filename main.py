@@ -1,8 +1,8 @@
 # main.py
 import pygame
 import sys
-from game_manager import GameManager
-from config import Config
+from logic.game_manager import GameManager
+from view.config import Config
 import gi
 
 gi.require_version("Gtk", "3.0")

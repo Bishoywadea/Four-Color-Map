@@ -1,5 +1,5 @@
 import pygame
-from config import Config
+from view.config import Config
 
 class Button:
     def __init__(self, x, y, width, height, color, text="", callback=None, icon_char=None, icon_path=None):
@@ -95,7 +95,7 @@ class UI:
             (255, 255, 255),  # White background
             "",  # No text
             callback=self.select_eraser,
-            icon_path="assets/eraser.png"
+            icon_path="assets/images/eraser.png"
         )
         
         # Action buttons on the right
@@ -109,7 +109,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "Menu",
             callback=self.game_manager.return_to_menu,
-            icon_path="assets/menu.png"
+            icon_path="assets/images/menu.png"
         )
         
         # Reset button
@@ -120,7 +120,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "Reset",
             callback=self.game_manager.reset_game,
-            icon_path="assets/reset.png"
+            icon_path="assets/images/reset.png"
         )
         
         # Undo button
@@ -131,7 +131,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "",
             callback=self.game_manager.undo_last_action,
-            icon_path="assets/undo.png"
+            icon_path="assets/images/undo.png"
         )
     
     def select_color(self, color_index):

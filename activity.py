@@ -34,7 +34,7 @@ from sugar3.activity.widgets import StopButton
 
 import sugargame.canvas
 
-import main
+import main as main
 
 
 class FourColorMap(Activity):

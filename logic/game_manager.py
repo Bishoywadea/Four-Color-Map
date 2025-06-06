@@ -1,9 +1,9 @@
 import pygame
 import time
-from config import Config
-from ui import UI
-from map_frame import MapFrame
-from menu import Menu
+from view.config import Config
+from view.ui import UI
+from view.map_frame import MapFrame
+from view.menu import Menu
 
 class GameManager:
     def __init__(self):
