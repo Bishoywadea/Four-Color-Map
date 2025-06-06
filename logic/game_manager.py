@@ -73,11 +73,20 @@ class GameManager:
             if self.ui.handle_event(event):
                 return  # UI handled the event
             
+            if self.map_frame and self.map_frame.handle_zoom(event):
+                return
+            
+            if self.map_frame and self.map_frame.handle_pan(event):
+                return
+            
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left click
+                if event.button == 1 and not self.map_frame.is_panning:
                     region_id = self.map_frame.detect_click(event.pos)
                     if region_id is not None:
                         self.color_region(region_id, self.selected_color)
+            
+            if event.type == pygame.KEYDOWN:
+                self.handle_keyboard_shortcuts(event)
     
     def return_to_menu(self):
         """Return to the main menu."""
@@ -277,3 +286,28 @@ class GameManager:
         else:
             self.game_completed = False
             self.puzzle_valid = False
+
+    def handle_keyboard_shortcuts(self, event):
+        """Handle keyboard shortcuts for zooming and other actions."""
+        if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
+            # Zoom in with + or =
+            if self.map_frame:
+                self.map_frame.zoom_level = min(
+                    self.map_frame.zoom_level + self.map_frame.zoom_speed,
+                    self.map_frame.max_zoom
+                )
+        elif event.key == pygame.K_MINUS:
+            # Zoom out with -
+            if self.map_frame:
+                self.map_frame.zoom_level = max(
+                    self.map_frame.zoom_level - self.map_frame.zoom_speed,
+                    self.map_frame.min_zoom
+                )
+        elif event.key == pygame.K_0:
+            # Reset view with 0
+            if self.map_frame:
+                self.map_frame.reset_view()
+        elif event.key == pygame.K_SPACE:
+            # Center map with spacebar
+            if self.map_frame:
+                self.map_frame.center_map()

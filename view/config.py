@@ -28,3 +28,8 @@ class Config:
     
     BORDER_WIDTH = 2
     REGION_HOVER_ALPHA = 50
+
+    DEFAULT_ZOOM = 1.0
+    MIN_ZOOM = 0.5
+    MAX_ZOOM = 10.0
+    ZOOM_SPEED = 0.1
