@@ -1,4 +1,3 @@
-# menu.py
 import pygame
 from config import Config
 from map_data import LEVELS
