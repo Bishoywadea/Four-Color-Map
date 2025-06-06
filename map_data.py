@@ -2063,18 +2063,20 @@ def get_level_3():
 LEVELS = [
     {
         'id': 1,
+        'tag':"polygons",
         'name': 'Simple Map',
         'description': '6 regions - Easy',
         'data_func': get_level_1
     },
     {
         'id': 2,
-        'name': 'Star Map',
+        'name': 'polygons',
         'description': '9 regions - Medium',
         'data_func': get_level_2
     },
     {
         'id': 3,
+        'tag':"countries",
         'name': 'US2',
         'description': '51 regions - Hard',
         'data_func': get_level_3
