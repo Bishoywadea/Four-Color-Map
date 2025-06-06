@@ -133,7 +133,28 @@ class UI:
             callback=self.game_manager.undo_last_action,
             icon_path="assets/images/undo.png"
         )
-    
+
+        zoom_in_x = undo_x - button_width - Config.BUTTON_MARGIN
+        self.zoom_in_button = Button(
+            zoom_in_x, button_y,
+            button_width, Config.COLOR_BUTTON_SIZE,
+            Config.COLORS['UI_BACKGROUND'],
+            "+",
+            callback=self.zoom_in,
+            # icon_path="assets/images/zoom-in.png" 
+        )
+
+        # Zoom out button
+        zoom_out_x = zoom_in_x - button_width - Config.BUTTON_MARGIN
+        self.zoom_out_button = Button(
+            zoom_out_x, button_y,
+            button_width, Config.COLOR_BUTTON_SIZE,
+            Config.COLORS['UI_BACKGROUND'],
+            "-",
+            callback=self.zoom_out,
+            # icon_path="assets/images/zoom-out.png" 
+        )
+            
     def select_color(self, color_index):
         """Select a color for painting regions."""
         self.game_manager.selected_color = color_index
@@ -161,6 +182,12 @@ class UI:
         if self.menu_button.handle_event(event):
             return True
         if self.undo_button.handle_event(event):
+            return True
+        if self.zoom_in_button.handle_event(event):
+            return True
+        if self.zoom_out_button.handle_event(event):
+            return True
+        if self.reset_button.handle_event(event):
             return True
         
         return False
@@ -199,6 +226,10 @@ class UI:
         
         # Draw timer
         self.draw_timer(surface)
+        self.zoom_in_button.draw(surface)
+        self.zoom_out_button.draw(surface)
+        self.reset_button.draw(surface)
+        self.draw_zoom_indicator(surface)
     
     def draw_timer(self, surface):
         """Draw the game timer."""
@@ -216,3 +247,39 @@ class UI:
                           Config.SCREEN_HEIGHT - Config.UI_HEIGHT // 2)
         
         surface.blit(text_surface, text_rect)
+
+    def zoom_in(self):
+        """Zoom in the map."""
+        if self.game_manager.map_frame:
+            self.game_manager.map_frame.zoom_level = min(
+                self.game_manager.map_frame.zoom_level + self.game_manager.map_frame.zoom_speed,
+                self.game_manager.map_frame.max_zoom
+            )
+
+    def zoom_out(self):
+        """Zoom out the map."""
+        if self.game_manager.map_frame:
+            self.game_manager.map_frame.zoom_level = max(
+                self.game_manager.map_frame.zoom_level - self.game_manager.map_frame.zoom_speed,
+                self.game_manager.map_frame.min_zoom
+            )
+
+    def reset_view(self):
+        """Reset the map view to default zoom and position."""
+        if self.game_manager.map_frame:
+            self.game_manager.map_frame.reset_view()
+
+    def draw_zoom_indicator(self, surface):
+        """Draw the current zoom level."""
+        if self.game_manager.map_frame:
+            zoom_percentage = int(self.game_manager.map_frame.zoom_level * 100)
+            font = pygame.font.Font(None, 24)
+            zoom_text = f"Zoom: {zoom_percentage}%"
+            text_surface = font.render(zoom_text, True, Config.COLORS['TEXT'])
+            
+            # Position near the zoom buttons
+            text_rect = text_surface.get_rect()
+            text_rect.bottomright = (self.reset_button.rect.left - Config.BUTTON_MARGIN, 
+                                    self.reset_button.rect.centery)
+            
+            surface.blit(text_surface, text_rect)

@@ -95,16 +95,14 @@ def get_level_2():
         start_angle = i * angle_per_slice
         end_angle = (i + 1) * angle_per_slice
         
-        # Start with center point (as a list, not tuple)
         points = [[center_x, center_y]]
         
-        # Add points along the arc
         for j in range(points_per_arc + 1):
             angle = start_angle + (end_angle - start_angle) * j / points_per_arc
             angle_rad = math.radians(angle)
             x = center_x + radius * math.cos(angle_rad)
             y = center_y + radius * math.sin(angle_rad)
-            points.append([int(x), int(y)])  # List format [x, y]
+            points.append([int(x), int(y)]) 
         
         prev_slice = (i - 1) % num_slices
         next_slice = (i + 1) % num_slices
@@ -112,7 +110,7 @@ def get_level_2():
         region = {
             'id': i,
             'name': f'Slice {chr(65 + i)}',
-            'points': points,  # Already in list format
+            'points': points, 
             'neighbors': [prev_slice, next_slice]
         }
         
@@ -312,18 +310,6 @@ def get_level_3():
                 (center_x + 405, center_y + -161),
             ],
             'neighbors': [18, 28, 36]
-        },
-        {
-            'id': 7,
-            'name': 'District of Columbia',
-            'points': [
-                (center_x + 368, center_y + -124),
-                (center_x + 372, center_y + -121),
-                (center_x + 369, center_y + -117),
-                (center_x + 366, center_y + -121),
-                (center_x + 368, center_y + -124),
-            ],
-            'neighbors': [18, 44]
         },
         {
             'id': 8,
@@ -1964,26 +1950,6 @@ def get_level_3():
             ],
             'neighbors': []
         },
-        {
-            'id': 51,
-            'name': 'Hawaii',
-            'points': [
-                (center_x + -193, center_y + 262),
-                (center_x + -200, center_y + 250),
-                (center_x + -191, center_y + 237),
-                (center_x + -187, center_y + 216),
-                (center_x + -168, center_y + 211),
-                (center_x + -163, center_y + 200),
-                (center_x + -146, center_y + 228),
-                (center_x + -142, center_y + 240),
-                (center_x + -146, center_y + 245),
-                (center_x + -141, center_y + 263),
-                (center_x + -153, center_y + 265),
-                (center_x + -182, center_y + 258),
-                (center_x + -193, center_y + 262),
-            ],
-            'neighbors': []
-        },
     ]
 
     return regions_data
@@ -3078,18 +3044,6 @@ def get_level_5():
             ],
             'neighbors': [2, 4, 17, 23]
         },
-        {
-            'id': 26,
-            'name': 'Luxor',
-            'points': [
-                (center_x + 161, center_y + 99),
-                (center_x + 159, center_y + 98),
-                (center_x + 161, center_y + 95),
-                (center_x + 163, center_y + 96),
-                (center_x + 161, center_y + 99),
-            ],
-            'neighbors': [2, 4, 24]
-        },
     ]
 
     return regions_data
@@ -3476,18 +3430,6 @@ def get_level_6():
             'neighbors': [14, 30, 32]
         },
         {
-            'id': 6,
-            'name': 'Chandigarh',
-            'points': [
-                (center_x + -152, center_y + -228),
-                (center_x + -152, center_y + -225),
-                (center_x + -155, center_y + -228),
-                (center_x + -153, center_y + -229),
-                (center_x + -152, center_y + -228),
-            ],
-            'neighbors': [12, 13, 25]
-        },
-        {
             'id': 7,
             'name': 'Chhattisgarh',
             'points': [
@@ -3557,22 +3499,6 @@ def get_level_6():
                 (center_x + -36, center_y + 133),
             ],
             'neighbors': [1, 2, 14, 17, 18, 23, 30]
-        },
-        {
-            'id': 8,
-            'name': 'Dādra and Nagar Haveli and Damān and Diu',
-            'points': [
-                (center_x + -307, center_y + 53),
-                (center_x + -306, center_y + 48),
-                (center_x + -302, center_y + 48),
-                (center_x + -302, center_y + 50),
-                (center_x + -303, center_y + 52),
-                (center_x + -302, center_y + 52),
-                (center_x + -303, center_y + 55),
-                (center_x + -302, center_y + 55),
-                (center_x + -307, center_y + 53),
-            ],
-            'neighbors': [11, 18]
         },
         {
             'id': 9,
@@ -4519,20 +4445,7 @@ def get_level_6():
             ],
             'neighbors': [1, 2, 7, 14, 32]
         },
-        {
-            'id': 24,
-            'name': 'Puducherry',
-            'points': [
-                (center_x + -75, center_y + 311),
-                (center_x + -75, center_y + 316),
-                (center_x + -76, center_y + 316),
-                (center_x + -79, center_y + 312),
-                (center_x + -78, center_y + 312),
-                (center_x + -78, center_y + 311),
-                (center_x + -75, center_y + 311),
-            ],
-            'neighbors': [2, 15, 16, 28]
-        },
+
         {
             'id': 25,
             'name': 'Punjab',
@@ -5045,18 +4958,6 @@ def get_level_6():
                 (center_x + 178, center_y + -111),
             ],
             'neighbors': [4, 5, 14, 23, 27]
-        },
-        {
-            'id': 33,
-            'name': 'Lakshadweep',
-            'points': [
-                (center_x + -246, center_y + 379),
-                (center_x + -247, center_y + 381),
-                (center_x + -248, center_y + 381),
-                (center_x + -247, center_y + 380),
-                (center_x + -246, center_y + 379),
-            ],
-            'neighbors': []
         },
         {
             'id': 34,
@@ -7773,7 +7674,6 @@ def get_level_7():
     return regions_data
 
 
-# Level information
 LEVELS = [
     {
         'id': 1,

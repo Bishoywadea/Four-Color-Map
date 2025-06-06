@@ -61,15 +61,17 @@ class Region:
         
         # Draw border
         pygame.draw.polygon(surface, Config.COLORS['BORDER'], self.points, Config.BORDER_WIDTH)
-
-    def apply_offset(self, offset):
-        """Apply an offset to all vertices of the region."""
-        self.vertices = [(x + offset[0], y + offset[1]) for x, y in self.vertices]
-        # Recalculate the bounding rect after applying offset
-        x_coords = [v[0] for v in self.vertices]
-        y_coords = [v[1] for v in self.vertices]
-        min_x, max_x = min(x_coords), max(x_coords)
-        min_y, max_y = min(y_coords), max(y_coords)
-        self.rect = pygame.Rect(min_x, min_y, max_x - min_x, max_y - min_y)
-
     
+    def draw_transformed(self, surface, screen_points, zoom_level):
+        """Draw the region with transformed points."""
+        if len(screen_points) < 3:
+            return
+        
+        # Fill the region
+        pygame.draw.polygon(surface, self.get_color(), screen_points)
+        
+        # Adjust border width based on zoom level
+        border_width = max(1, int(Config.BORDER_WIDTH * zoom_level))
+        
+        # Draw border
+        pygame.draw.polygon(surface, Config.COLORS['BORDER'], screen_points, border_width)
