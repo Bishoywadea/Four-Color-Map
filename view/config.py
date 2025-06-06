@@ -15,13 +15,6 @@ class Config:
         'BUTTON_HOVER': (220, 220, 220),  # Light gray
     }
     
-    GAME_COLORS = [
-        (255, 0, 0),    # Red
-        (0, 255, 0),    # Green  
-        (255, 255, 0),  # Yellow
-        (128, 0, 128),  # Purple
-    ]
-    
     UI_HEIGHT = 80
     COLOR_BUTTON_SIZE = 50
     BUTTON_MARGIN = 10
@@ -33,3 +26,18 @@ class Config:
     MIN_ZOOM = 0.5
     MAX_ZOOM = 10.0
     ZOOM_SPEED = 0.1
+
+    DEFAULT_GAME_COLORS = [
+        (255, 99, 71),   # Red/Tomato
+        (100, 149, 237), # Blue/Cornflower
+        (255, 215, 0),   # Gold
+        (50, 205, 50)    # Green/Lime
+    ]
+    
+    # Current game colors (can be customized)
+    GAME_COLORS = DEFAULT_GAME_COLORS.copy()
+    
+    @staticmethod
+    def reset_colors():
+        """Reset colors to defaults."""
+        Config.GAME_COLORS = Config.DEFAULT_GAME_COLORS.copy()

@@ -1,8 +1,7 @@
-# menu.py
 import pygame
 from view.config import Config
 from view.map_data import LEVELS
-
+from view.color_picker import SimpleColorPicker
 class Menu:
     def __init__(self, game_manager):
         self.game_manager = game_manager
@@ -21,10 +20,53 @@ class Menu:
         self.category_buttons = []
         self.level_buttons = []
         self.back_button = None
+
+        # Settings components
+        self.color_previews = []
+        self.color_picker = None
+        self.reset_colors_button = None
+        self.selected_color_index = None
         
         self.setup_main_buttons()
         self.setup_category_buttons()
         self.setup_back_button()
+        self.setup_settings_components()
+
+    def setup_settings_components(self):
+        """Set up settings menu components."""
+        # Create color previews
+        preview_size = 100
+        preview_spacing = 40
+        start_x = Config.SCREEN_WIDTH // 2 - (2 * preview_size + 1.5 * preview_spacing)
+        start_y = 250
+        
+        for i in range(4):
+            x = start_x + i * (preview_size + preview_spacing)
+            preview_rect = pygame.Rect(x, start_y, preview_size, preview_size)
+            self.color_previews.append({
+                'rect': preview_rect,
+                'index': i,
+                'selected': False
+            })
+        
+        # Create color picker
+        picker_x = (Config.SCREEN_WIDTH - 265) // 2  # 5 cols * 40 + 4 * 5 spacing
+        picker_y = start_y + preview_size + 80
+        self.color_picker = SimpleColorPicker(picker_x, picker_y)
+        
+        # Reset colors button
+        button_width = 200
+        button_height = 60
+        self.reset_colors_button = {
+            'rect': pygame.Rect(
+                (Config.SCREEN_WIDTH - button_width) // 2,
+                picker_y + 280,
+                button_width,
+                button_height
+            ),
+            'text': 'Reset to Default',
+            'hovered': False
+        }
         
     def setup_back_button(self):
         """Set up the back button."""
@@ -153,6 +195,8 @@ class Menu:
             elif self.state == 'level_selection':
                 for button in self.level_buttons:
                     button['hovered'] = button['rect'].collidepoint(mouse_pos)
+            elif self.state == 'settings':
+                self.reset_colors_button['hovered'] = self.reset_colors_button['rect'].collidepoint(mouse_pos)
                 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left click
@@ -164,6 +208,12 @@ class Menu:
                         self.state = 'level_categories'
                     elif self.state == 'level_categories':
                         self.state = 'main'
+                    elif self.state == 'settings':
+                        self.state = 'main'
+                        # Reset selected states when leaving settings
+                        self.selected_color_index = None
+                        for preview in self.color_previews:
+                            preview['selected'] = False
                     return False
                 
                 if self.state == 'main':
@@ -172,8 +222,7 @@ class Menu:
                             if button['action'] == 'level_categories':
                                 self.state = 'level_categories'
                             elif button['action'] == 'settings':
-                                # Settings does nothing for now
-                                pass
+                                self.state = 'settings'
                 
                 elif self.state == 'level_categories':
                     for button in self.category_buttons:
@@ -187,6 +236,32 @@ class Menu:
                         if button['rect'].collidepoint(mouse_pos):
                             self.selected_level = button['level']
                             return True
+                
+                elif self.state == 'settings':
+                    # Check color preview clicks
+                    for preview in self.color_previews:
+                        if preview['rect'].collidepoint(mouse_pos):
+                            # Deselect all previews
+                            for p in self.color_previews:
+                                p['selected'] = False
+                            # Select this one
+                            preview['selected'] = True
+                            self.selected_color_index = preview['index']
+                            # Set color picker to current color
+                            self.color_picker.selected_color = Config.GAME_COLORS[preview['index']]
+                    
+                    # Check color picker clicks
+                    if self.color_picker.handle_event(event):
+                        if self.selected_color_index is not None and self.color_picker.selected_color:
+                            Config.GAME_COLORS[self.selected_color_index] = self.color_picker.selected_color
+                    
+                    # Check reset button
+                    if self.reset_colors_button['rect'].collidepoint(mouse_pos):
+                        Config.reset_colors()
+                        # Clear selections
+                        self.selected_color_index = None
+                        for preview in self.color_previews:
+                            preview['selected'] = False
         
         return False
     
@@ -211,6 +286,8 @@ class Menu:
             self.draw_category_menu(screen)
         elif self.state == 'level_selection':
             self.draw_level_selection(screen)
+        elif self.state == 'settings':
+            self.draw_settings_menu(screen)
         
         # Draw back button (except on main menu)
         if self.state != 'main':
@@ -290,3 +367,43 @@ class Menu:
                 desc_text = self.font_small.render(button['level']['description'], True, Config.COLORS['TEXT'])
                 desc_rect = desc_text.get_rect(center=(button['rect'].centerx, button['rect'].centery + 15))
                 screen.blit(desc_text, desc_rect)
+
+    def draw_settings_menu(self, screen):
+        """Draw the settings menu."""
+        # Draw subtitle
+        subtitle_text = self.font_desc.render("Color Settings", True, Config.COLORS['TEXT'])
+        subtitle_rect = subtitle_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
+        screen.blit(subtitle_text, subtitle_rect)
+        
+        # Instructions
+        instruction_text = self.font_small.render("Click a color slot, then choose a new color from the palette", True, Config.COLORS['TEXT'])
+        instruction_rect = instruction_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 200))
+        screen.blit(instruction_text, instruction_rect)
+        
+        # Draw color previews with labels
+        for i, preview in enumerate(self.color_previews):
+            # Draw the color box
+            pygame.draw.rect(screen, Config.GAME_COLORS[i], preview['rect'])
+            
+            # Draw border (thicker if selected)
+            if preview['selected']:
+                pygame.draw.rect(screen, (255, 255, 255), preview['rect'], 4)
+            else:
+                pygame.draw.rect(screen, Config.COLORS['BORDER'], preview['rect'], 2)
+            
+            # Draw label above
+            label_text = self.font_small.render(f"Color {i + 1}", True, Config.COLORS['TEXT'])
+            label_rect = label_text.get_rect(center=(preview['rect'].centerx, preview['rect'].top - 20))
+            screen.blit(label_text, label_rect)
+        
+        # Draw color picker
+        self.color_picker.draw(screen)
+        
+        # Draw reset button
+        color = Config.COLORS['BUTTON_HOVER'] if self.reset_colors_button['hovered'] else Config.COLORS['UI_BACKGROUND']
+        pygame.draw.rect(screen, color, self.reset_colors_button['rect'])
+        pygame.draw.rect(screen, Config.COLORS['BORDER'], self.reset_colors_button['rect'], 3)
+        
+        text = self.font_button.render(self.reset_colors_button['text'], True, Config.COLORS['TEXT'])
+        text_rect = text.get_rect(center=self.reset_colors_button['rect'].center)
+        screen.blit(text, text_rect)
