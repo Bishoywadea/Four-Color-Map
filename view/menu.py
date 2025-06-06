@@ -1,7 +1,7 @@
 # menu.py
 import pygame
-from config import Config
-from map_data import LEVELS
+from view.config import Config
+from view.map_data import LEVELS
 
 class Menu:
     def __init__(self, game_manager):

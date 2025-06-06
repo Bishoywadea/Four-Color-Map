@@ -1,4 +1,4 @@
-from region import Region
+from view.region import Region
 
 class MapFrame:
     def __init__(self, game_manager, center_pos):

@@ -1,5 +1,5 @@
 import pygame
-from config import Config
+from view.config import Config
 
 class Region:
     def __init__(self, region_id, points, name=""):
