@@ -141,7 +141,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "+",
             callback=self.zoom_in,
-            # icon_path="assets/images/zoom-in.png" 
+            icon_path="assets/images/zoom-in.png" 
         )
 
         # Zoom out button
@@ -152,7 +152,7 @@ class UI:
             Config.COLORS['UI_BACKGROUND'],
             "-",
             callback=self.zoom_out,
-            # icon_path="assets/images/zoom-out.png" 
+            icon_path="assets/images/zoom-out.png" 
         )
             
     def select_color(self, color_index):
@@ -229,7 +229,6 @@ class UI:
         self.zoom_in_button.draw(surface)
         self.zoom_out_button.draw(surface)
         self.reset_button.draw(surface)
-        self.draw_zoom_indicator(surface)
     
     def draw_timer(self, surface):
         """Draw the game timer."""
@@ -268,18 +267,3 @@ class UI:
         """Reset the map view to default zoom and position."""
         if self.game_manager.map_frame:
             self.game_manager.map_frame.reset_view()
-
-    def draw_zoom_indicator(self, surface):
-        """Draw the current zoom level."""
-        if self.game_manager.map_frame:
-            zoom_percentage = int(self.game_manager.map_frame.zoom_level * 100)
-            font = pygame.font.Font(None, 24)
-            zoom_text = f"Zoom: {zoom_percentage}%"
-            text_surface = font.render(zoom_text, True, Config.COLORS['TEXT'])
-            
-            # Position near the zoom buttons
-            text_rect = text_surface.get_rect()
-            text_rect.bottomright = (self.reset_button.rect.left - Config.BUTTON_MARGIN, 
-                                    self.reset_button.rect.centery)
-            
-            surface.blit(text_surface, text_rect)
