@@ -1,5 +1,5 @@
-# map_data.py
 from view.config import Config
+import math
 
 def get_level_1():
     """Level 1: Simple 6-region map."""
@@ -80,114 +80,43 @@ def get_level_1():
     return regions_data
 
 def get_level_2():
-    """Level 2: Star-shaped map with 9 regions."""
-    center_x = 400
-    center_y = 250
+    """Level: Pizza-shaped map with 8 slices."""
+    center_x = Config.SCREEN_WIDTH // 2
+    center_y = Config.SCREEN_HEIGHT // 2
     
-    regions_data = [
-        # Center region
-        {
-            'id': 0,
-            'name': 'Center',
-            'points': [
-                (center_x - 40, center_y - 40),
-                (center_x + 40, center_y - 40),
-                (center_x + 40, center_y + 40),
-                (center_x - 40, center_y + 40)
-            ],
-            'neighbors': [1, 2, 3, 4, 5, 6, 7, 8]
-        },
-        # Top point
-        {
-            'id': 1,
-            'name': 'North',
-            'points': [
-                (center_x - 40, center_y - 40),
-                (center_x, center_y - 150),
-                (center_x + 40, center_y - 40)
-            ],
-            'neighbors': [0, 2, 8]
-        },
-        # Top-right
-        {
-            'id': 2,
-            'name': 'NorthEast',
-            'points': [
-                (center_x + 40, center_y - 40),
-                (center_x + 120, center_y - 80),
-                (center_x + 80, center_y)
-            ],
-            'neighbors': [0, 1, 3]
-        },
-        # Right point
-        {
-            'id': 3,
-            'name': 'East',
-            'points': [
-                (center_x + 40, center_y - 40),
-                (center_x + 80, center_y),
-                (center_x + 40, center_y + 40),
-                (center_x + 150, center_y)
-            ],
-            'neighbors': [0, 2, 4]
-        },
-        # Bottom-right
-        {
-            'id': 4,
-            'name': 'SouthEast',
-            'points': [
-                (center_x + 40, center_y + 40),
-                (center_x + 80, center_y),
-                (center_x + 120, center_y + 80)
-            ],
-            'neighbors': [0, 3, 5]
-        },
-        # Bottom point
-        {
-            'id': 5,
-            'name': 'South',
-            'points': [
-                (center_x + 40, center_y + 40),
-                (center_x, center_y + 150),
-                (center_x - 40, center_y + 40)
-            ],
-            'neighbors': [0, 4, 6]
-        },
-        # Bottom-left
-        {
-            'id': 6,
-            'name': 'SouthWest',
-            'points': [
-                (center_x - 40, center_y + 40),
-                (center_x - 120, center_y + 80),
-                (center_x - 80, center_y)
-            ],
-            'neighbors': [0, 5, 7]
-        },
-        # Left point
-        {
-            'id': 7,
-            'name': 'West',
-            'points': [
-                (center_x - 40, center_y + 40),
-                (center_x - 80, center_y),
-                (center_x - 40, center_y - 40),
-                (center_x - 150, center_y)
-            ],
-            'neighbors': [0, 6, 8]
-        },
-        # Top-left
-        {
-            'id': 8,
-            'name': 'NorthWest',
-            'points': [
-                (center_x - 40, center_y - 40),
-                (center_x - 80, center_y),
-                (center_x - 120, center_y - 80)
-            ],
-            'neighbors': [0, 7, 1]
+    radius = 150
+    num_slices = 8
+    angle_per_slice = 360 / num_slices
+    points_per_arc = 5
+    
+    regions_data = []
+    
+    for i in range(num_slices):
+        start_angle = i * angle_per_slice
+        end_angle = (i + 1) * angle_per_slice
+        
+        # Start with center point (as a list, not tuple)
+        points = [[center_x, center_y]]
+        
+        # Add points along the arc
+        for j in range(points_per_arc + 1):
+            angle = start_angle + (end_angle - start_angle) * j / points_per_arc
+            angle_rad = math.radians(angle)
+            x = center_x + radius * math.cos(angle_rad)
+            y = center_y + radius * math.sin(angle_rad)
+            points.append([int(x), int(y)])  # List format [x, y]
+        
+        prev_slice = (i - 1) % num_slices
+        next_slice = (i + 1) % num_slices
+        
+        region = {
+            'id': i,
+            'name': f'Slice {chr(65 + i)}',
+            'points': points,  # Already in list format
+            'neighbors': [prev_slice, next_slice]
         }
-    ]
+        
+        regions_data.append(region)
     
     return regions_data
 
@@ -7855,8 +7784,9 @@ LEVELS = [
     },
     {
         'id': 2,
-        'name': 'polygons',
-        'description': '9 regions - Medium',
+        'tag':"polygons",
+        'name': 'pizza',
+        'description': '8 regions - Medium',
         'data_func': get_level_2
     },
     {
