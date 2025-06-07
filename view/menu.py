@@ -1,14 +1,17 @@
 import pygame
+import math
 from view.config import Config
 from view.map_data import LEVELS
 from view.color_picker import SimpleColorPicker
+
 class Menu:
     def __init__(self, game_manager):
         self.game_manager = game_manager
-        self.font_title = pygame.font.Font(None, 72)
-        self.font_button = pygame.font.Font(None, 48)
-        self.font_desc = pygame.font.Font(None, 32)
-        self.font_small = pygame.font.Font(None, 28)
+        # Larger, more playful fonts
+        self.font_title = pygame.font.Font(None, 84)
+        self.font_button = pygame.font.Font(None, 56)
+        self.font_desc = pygame.font.Font(None, 42)
+        self.font_small = pygame.font.Font(None, 36)
         
         # Menu states
         self.state = 'main'  # 'main', 'level_categories', 'level_selection'
@@ -27,18 +30,84 @@ class Menu:
         self.reset_colors_button = None
         self.selected_color_index = None
         
+        # Animation variables for fun effects
+        self.animation_time = 0
+        self.star_positions = []
+        self.generate_stars()
+        
         self.setup_main_buttons()
         self.setup_category_buttons()
         self.setup_back_button()
         self.setup_settings_components()
 
+    def generate_stars(self):
+        """Generate random star positions for background decoration."""
+        import random
+        self.star_positions = []
+        for _ in range(20):
+            x = random.randint(50, Config.SCREEN_WIDTH - 50)
+            y = random.randint(50, Config.SCREEN_HEIGHT - 50)
+            size = random.randint(2, 6)
+            self.star_positions.append((x, y, size))
+
+    def draw_star(self, screen, x, y, size, color=(255, 255, 100)):
+        """Draw a cute star shape."""
+        points = []
+        for i in range(10):
+            angle = i * math.pi / 5
+            if i % 2 == 0:
+                # Outer points
+                px = x + size * math.cos(angle)
+                py = y + size * math.sin(angle)
+            else:
+                # Inner points
+                px = x + (size * 0.4) * math.cos(angle)
+                py = y + (size * 0.4) * math.sin(angle)
+            points.append((px, py))
+        pygame.draw.polygon(screen, color, points)
+
+    def draw_colorful_border(self, screen, rect, thickness=3):
+        """Draw a colorful border around a rectangle."""
+        # Use alternating bright colors instead of rainbow
+        colors = [
+            (100, 200, 255),  # Bright blue
+            (255, 100, 150),  # Bright pink
+            (100, 255, 150),  # Bright green
+        ]
+        
+        for i in range(thickness):
+            color = colors[i % len(colors)]
+            pygame.draw.rect(screen, color, rect.inflate(i*2, i*2), 1)
+
+    def draw_button_with_shadow(self, screen, rect, color, border_color, text, font, text_color, hovered=False):
+        """Draw a button with shadow and fun styling."""
+        # Shadow
+        shadow_rect = rect.copy()
+        shadow_rect.x += 4
+        shadow_rect.y += 4
+        pygame.draw.rect(screen, (50, 50, 50), shadow_rect, border_radius=15)
+        
+        # Main button with rounded corners
+        button_color = color
+        if hovered:
+            button_color = tuple(min(255, c + 30) for c in color)
+        
+        pygame.draw.rect(screen, button_color, rect, border_radius=15)
+        
+        pygame.draw.rect(screen, border_color, rect, 3, border_radius=15)
+        
+        # Button text
+        text_surface = font.render(text, True, text_color)
+        text_rect = text_surface.get_rect(center=rect.center)
+        screen.blit(text_surface, text_rect)
+
     def setup_settings_components(self):
         """Set up settings menu components."""
-        # Create color previews
-        preview_size = 100
-        preview_spacing = 40
+        # Create color previews - larger and more spaced out
+        preview_size = 120
+        preview_spacing = 50
         start_x = Config.SCREEN_WIDTH // 2 - (2 * preview_size + 1.5 * preview_spacing)
-        start_y = 250
+        start_y = 280
         
         for i in range(4):
             x = start_x + i * (preview_size + preview_spacing)
@@ -50,44 +119,44 @@ class Menu:
             })
         
         # Create color picker
-        picker_x = (Config.SCREEN_WIDTH - 265) // 2  # 5 cols * 40 + 4 * 5 spacing
-        picker_y = start_y + preview_size + 80
+        picker_x = (Config.SCREEN_WIDTH - 265) // 2
+        picker_y = start_y + preview_size + 100
         self.color_picker = SimpleColorPicker(picker_x, picker_y)
         
-        # Reset colors button
-        button_width = 200
-        button_height = 60
+        # Reset colors button - larger and more colorful
+        button_width = 250
+        button_height = 70
         self.reset_colors_button = {
             'rect': pygame.Rect(
                 (Config.SCREEN_WIDTH - button_width) // 2,
-                picker_y + 280,
+                picker_y + 300,
                 button_width,
                 button_height
             ),
-            'text': 'Reset to Default',
+            'text': 'Reset Colors',
             'hovered': False
         }
         
     def setup_back_button(self):
         """Set up the back button."""
-        button_width = 100
-        button_height = 40
+        button_width = 120
+        button_height = 50
         self.back_button = {
             'rect': pygame.Rect(
-                20,  # Left margin
-                Config.SCREEN_HEIGHT - 60,  # Bottom position
+                30,  # Left margin
+                Config.SCREEN_HEIGHT - 80,  # Bottom position
                 button_width,
                 button_height
             ),
-            'text': '← Back',
+            'text': 'Back',
             'hovered': False
         }
         
     def setup_main_buttons(self):
         """Set up main menu buttons."""
-        button_width = 300
-        button_height = 80
-        button_spacing = 30
+        button_width = 350
+        button_height = 90
+        button_spacing = 40
         
         # Center buttons
         start_y = Config.SCREEN_HEIGHT // 2 - button_height - button_spacing // 2
@@ -100,9 +169,10 @@ class Menu:
                 button_width,
                 button_height
             ),
-            'text': 'Choose Level',
+            'text': 'Choose Adventure',
             'action': 'level_categories',
-            'hovered': False
+            'hovered': False,
+            'color': (100, 200, 255)  # Light blue
         })
         
         # Settings button
@@ -113,18 +183,22 @@ class Menu:
                 button_width,
                 button_height
             ),
-            'text': 'Settings',
+            'text': 'Color Settings',
             'action': 'settings',
-            'hovered': False
+            'hovered': False,
+            'color': (255, 150, 200)  # Light pink
         })
     
     def setup_category_buttons(self):
         """Set up level category buttons."""
-        button_width = 250
-        button_height = 80
-        button_spacing = 30
+        button_width = 280
+        button_height = 100
+        button_spacing = 50
         
-        categories = ['Countries', 'Polygons']
+        categories = [
+            {'name': 'Countries', 'color': (150, 255, 150)},
+            {'name': 'Polygons', 'color': (255, 200, 100)}
+        ]
         
         # Calculate starting position
         total_width = len(categories) * button_width + (len(categories) - 1) * button_spacing
@@ -139,9 +213,10 @@ class Menu:
                     button_width,
                     button_height
                 ),
-                'text': category,
-                'tag': category.lower(),
-                'hovered': False
+                'text': f"{category['name']}",
+                'tag': category['name'].lower(),
+                'hovered': False,
+                'color': category['color']
             })
     
     def setup_level_buttons(self, category):
@@ -154,13 +229,23 @@ class Menu:
         if not filtered_levels:
             return
         
-        button_width = 400
-        button_height = 80
-        button_spacing = 20
+        button_width = 450
+        button_height = 90
+        button_spacing = 25
         
         # Calculate starting Y position
         total_height = len(filtered_levels) * (button_height + button_spacing) - button_spacing
-        start_y = (Config.SCREEN_HEIGHT - total_height) // 2 + 50
+        start_y = (Config.SCREEN_HEIGHT - total_height) // 2 + 60
+        
+        # Fun colors for level buttons
+        level_colors = [
+            (255, 180, 180),  # Light red
+            (180, 255, 180),  # Light green
+            (180, 180, 255),  # Light blue
+            (255, 255, 180),  # Light yellow
+            (255, 180, 255),  # Light magenta
+            (180, 255, 255),  # Light cyan
+        ]
         
         for i, level in enumerate(filtered_levels):
             button_y = start_y + i * (button_height + button_spacing)
@@ -174,8 +259,13 @@ class Menu:
             self.level_buttons.append({
                 'rect': button_rect,
                 'level': level,
-                'hovered': False
+                'hovered': False,
+                'color': level_colors[i % len(level_colors)]
             })
+    
+    def update_animation(self):
+        """Update animation variables."""
+        self.animation_time += 0.02
     
     def handle_event(self, event):
         """Handle menu events."""
@@ -267,18 +357,17 @@ class Menu:
     
     def draw(self, screen):
         """Draw the menu."""
-        # Clear screen
-        screen.fill(Config.COLORS['BACKGROUND'])
+        # Update animations
+        self.update_animation()
         
-        # Draw title
-        title_text = self.font_title.render("Four Color Map Puzzle", True, Config.COLORS['TEXT'])
-        title_rect = title_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 80))
+        # Gradient background
+        self.draw_gradient_background(screen)
         
-        # Title background
-        title_bg = title_rect.inflate(40, 20)
-        pygame.draw.rect(screen, Config.COLORS['UI_BACKGROUND'], title_bg)
-        pygame.draw.rect(screen, Config.COLORS['BORDER'], title_bg, 3)
-        screen.blit(title_text, title_rect)
+        # Draw animated stars
+        self.draw_animated_stars(screen)
+        
+        # Draw title with fun effects
+        self.draw_fancy_title(screen)
         
         if self.state == 'main':
             self.draw_main_menu(screen)
@@ -292,118 +381,174 @@ class Menu:
         # Draw back button (except on main menu)
         if self.state != 'main':
             self.draw_back_button(screen)
+
+    def draw_gradient_background(self, screen):
+        """Draw a colorful gradient background."""
+        # Create a simple vertical gradient
+        for y in range(Config.SCREEN_HEIGHT):
+            ratio = y / Config.SCREEN_HEIGHT
+            r = int(135 + (200 - 135) * ratio)  # Light blue to light purple
+            g = int(206 + (150 - 206) * ratio)
+            b = int(235 + (255 - 235) * ratio)
+            color = (r, g, b)
+            pygame.draw.line(screen, color, (0, y), (Config.SCREEN_WIDTH, y))
+
+    def draw_animated_stars(self, screen):
+        """Draw twinkling stars in the background."""
+        for i, (x, y, size) in enumerate(self.star_positions):
+            # Make stars twinkle
+            alpha = abs(math.sin(self.animation_time * 2 + i)) * 0.5 + 0.5
+            brightness = int(255 * alpha)
+            color = (brightness, brightness, 100)
+            self.draw_star(screen, x, y, size, color)
+
+    def draw_fancy_title(self, screen):
+        """Draw the title with fun effects."""
+        title_text = "Four Color Map Puzzle"
+        
+        # Create title surface with larger font
+        title_surface = self.font_title.render(title_text, True, (255, 255, 255))
+        title_rect = title_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 80))
+        
+        # Animated background
+        bg_rect = title_rect.inflate(60, 40)
+        # Pulsing effect
+        pulse = abs(math.sin(self.animation_time * 3)) * 20 + 10
+        bg_color = (50 + pulse, 100 + pulse, 200 + pulse)
+        pygame.draw.rect(screen, bg_color, bg_rect, border_radius=20)
+        
+        # Shadow text
+        shadow_surface = self.font_title.render(title_text, True, (50, 50, 50))
+        shadow_rect = shadow_surface.get_rect(center=(title_rect.centerx + 3, title_rect.centery + 3))
+        screen.blit(shadow_surface, shadow_rect)
+        
+        # Main title
+        screen.blit(title_surface, title_rect)
     
     def draw_back_button(self, screen):
         """Draw the back button."""
-        color = Config.COLORS['BUTTON_HOVER'] if self.back_button['hovered'] else Config.COLORS['UI_BACKGROUND']
-        pygame.draw.rect(screen, color, self.back_button['rect'])
-        pygame.draw.rect(screen, Config.COLORS['BORDER'], self.back_button['rect'], 2)
-        
-        text = self.font_small.render(self.back_button['text'], True, Config.COLORS['TEXT'])
-        text_rect = text.get_rect(center=self.back_button['rect'].center)
-        screen.blit(text, text_rect)
+        color = (100, 255, 100) if self.back_button['hovered'] else (150, 200, 255)
+        self.draw_button_with_shadow(screen, self.back_button['rect'], color, (100, 100, 100), 
+                                   self.back_button['text'], self.font_small, (50, 50, 50), 
+                                   self.back_button['hovered'])
     
     def draw_main_menu(self, screen):
         """Draw the main menu."""
-        # Draw subtitle
-        subtitle_text = self.font_desc.render("Main Menu", True, Config.COLORS['TEXT'])
-        subtitle_rect = subtitle_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
-        screen.blit(subtitle_text, subtitle_rect)
+        # Draw subtitle with fun styling
+        subtitle_text = "Welcome! Choose Your Fun!"
+        subtitle_surface = self.font_desc.render(subtitle_text, True, (255, 255, 255))
+        subtitle_rect = subtitle_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 180))
         
-        # Draw buttons
+        # Subtitle background
+        bg_rect = subtitle_rect.inflate(40, 20)
+        pygame.draw.rect(screen, (100, 150, 255, 128), bg_rect, border_radius=15)
+        screen.blit(subtitle_surface, subtitle_rect)
+        
+        # Draw buttons with fun colors
         for button in self.main_buttons:
-            color = Config.COLORS['BUTTON_HOVER'] if button['hovered'] else Config.COLORS['UI_BACKGROUND']
-            pygame.draw.rect(screen, color, button['rect'])
-            pygame.draw.rect(screen, Config.COLORS['BORDER'], button['rect'], 3)
-            
-            text = self.font_button.render(button['text'], True, Config.COLORS['TEXT'])
-            text_rect = text.get_rect(center=button['rect'].center)
-            screen.blit(text, text_rect)
+            self.draw_button_with_shadow(screen, button['rect'], button['color'], (100, 100, 100),
+                                       button['text'], self.font_button, (50, 50, 50), button['hovered'])
     
     def draw_category_menu(self, screen):
         """Draw the category selection menu."""
         # Draw subtitle
-        subtitle_text = self.font_desc.render("Select Map Category", True, Config.COLORS['TEXT'])
-        subtitle_rect = subtitle_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
-        screen.blit(subtitle_text, subtitle_rect)
+        subtitle_text = "Pick Your Map Adventure!"
+        subtitle_surface = self.font_desc.render(subtitle_text, True, (255, 255, 255))
+        subtitle_rect = subtitle_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 180))
+        
+        # Subtitle background
+        bg_rect = subtitle_rect.inflate(40, 20)
+        pygame.draw.rect(screen, (255, 150, 100, 128), bg_rect, border_radius=15)
+        screen.blit(subtitle_surface, subtitle_rect)
         
         # Draw category buttons
         for button in self.category_buttons:
-            color = Config.COLORS['BUTTON_HOVER'] if button['hovered'] else Config.COLORS['UI_BACKGROUND']
-            pygame.draw.rect(screen, color, button['rect'])
-            pygame.draw.rect(screen, Config.COLORS['BORDER'], button['rect'], 3)
-            
-            text = self.font_button.render(button['text'], True, Config.COLORS['TEXT'])
-            text_rect = text.get_rect(center=button['rect'].center)
-            screen.blit(text, text_rect)
+            self.draw_button_with_shadow(screen, button['rect'], button['color'], (100, 100, 100),
+                                       button['text'], self.font_button, (50, 50, 50), button['hovered'])
     
     def draw_level_selection(self, screen):
         """Draw the level selection menu."""
         # Draw subtitle
         category_name = self.selected_category.capitalize()
-        subtitle_text = self.font_desc.render(f"Select {category_name} Map", True, Config.COLORS['TEXT'])
-        subtitle_rect = subtitle_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
-        screen.blit(subtitle_text, subtitle_rect)
+        subtitle_text = f"Choose Your {category_name} Challenge!"
+        subtitle_surface = self.font_desc.render(subtitle_text, True, (255, 255, 255))
+        subtitle_rect = subtitle_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 180))
+        
+        # Subtitle background
+        bg_rect = subtitle_rect.inflate(40, 20)
+        pygame.draw.rect(screen, (150, 255, 150, 128), bg_rect, border_radius=15)
+        screen.blit(subtitle_surface, subtitle_rect)
         
         if not self.level_buttons:
             # No levels found message
-            no_levels_text = self.font_desc.render(f"No {category_name} maps available", True, Config.COLORS['TEXT'])
-            no_levels_rect = no_levels_text.get_rect(center=(Config.SCREEN_WIDTH // 2, Config.SCREEN_HEIGHT // 2))
-            screen.blit(no_levels_text, no_levels_rect)
+            no_levels_text = f"No {category_name} maps available yet!"
+            no_levels_surface = self.font_desc.render(no_levels_text, True, (255, 100, 100))
+            no_levels_rect = no_levels_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, Config.SCREEN_HEIGHT // 2))
+            screen.blit(no_levels_surface, no_levels_rect)
         else:
             # Draw level buttons
             for button in self.level_buttons:
-                # Button background
-                color = Config.COLORS['BUTTON_HOVER'] if button['hovered'] else Config.COLORS['UI_BACKGROUND']
-                pygame.draw.rect(screen, color, button['rect'])
-                pygame.draw.rect(screen, Config.COLORS['BORDER'], button['rect'], 3)
+                # Button with shadow and fun styling
+                self.draw_button_with_shadow(screen, button['rect'], button['color'], (100, 100, 100),
+                                           "", self.font_button, (50, 50, 50), button['hovered'])
                 
-                # Level name
-                level_text = self.font_button.render(button['level']['name'], True, Config.COLORS['TEXT'])
-                level_rect = level_text.get_rect(center=(button['rect'].centerx, button['rect'].centery - 10))
-                screen.blit(level_text, level_rect)
+                # Custom text layout for levels
+                level_name = f"{button['level']['name']}"
+                level_surface = self.font_button.render(level_name, True, (50, 50, 50))
+                level_rect = level_surface.get_rect(center=(button['rect'].centerx, button['rect'].centery - 15))
+                screen.blit(level_surface, level_rect)
                 
                 # Level description
-                desc_text = self.font_small.render(button['level']['description'], True, Config.COLORS['TEXT'])
-                desc_rect = desc_text.get_rect(center=(button['rect'].centerx, button['rect'].centery + 15))
-                screen.blit(desc_text, desc_rect)
+                desc_surface = self.font_small.render(button['level']['description'], True, (80, 80, 80))
+                desc_rect = desc_surface.get_rect(center=(button['rect'].centerx, button['rect'].centery + 20))
+                screen.blit(desc_surface, desc_rect)
 
     def draw_settings_menu(self, screen):
         """Draw the settings menu."""
         # Draw subtitle
-        subtitle_text = self.font_desc.render("Color Settings", True, Config.COLORS['TEXT'])
-        subtitle_rect = subtitle_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
-        screen.blit(subtitle_text, subtitle_rect)
+        subtitle_text = "Make It Your Colors!"
+        subtitle_surface = self.font_desc.render(subtitle_text, True, (255, 255, 255))
+        subtitle_rect = subtitle_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 180))
         
-        # Instructions
-        instruction_text = self.font_small.render("Click a color slot, then choose a new color from the palette", True, Config.COLORS['TEXT'])
-        instruction_rect = instruction_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 200))
-        screen.blit(instruction_text, instruction_rect)
+        # Subtitle background
+        bg_rect = subtitle_rect.inflate(40, 20)
+        pygame.draw.rect(screen, (255, 150, 255, 128), bg_rect, border_radius=15)
+        screen.blit(subtitle_surface, subtitle_rect)
         
-        # Draw color previews with labels
+        # Instructions with fun styling
+        instruction_text = "Click a color box, then pick a new color!"
+        instruction_surface = self.font_small.render(instruction_text, True, (255, 255, 255))
+        instruction_rect = instruction_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 230))
+        screen.blit(instruction_surface, instruction_rect)
+        
+        # Draw color previews with fun styling
         for i, preview in enumerate(self.color_previews):
-            # Draw the color box
-            pygame.draw.rect(screen, Config.GAME_COLORS[i], preview['rect'])
+            # Shadow for color box
+            shadow_rect = preview['rect'].copy()
+            shadow_rect.x += 4
+            shadow_rect.y += 4
+            pygame.draw.rect(screen, (50, 50, 50), shadow_rect, border_radius=15)
             
-            # Draw border (thicker if selected)
+            # Draw the color box with rounded corners
+            pygame.draw.rect(screen, Config.GAME_COLORS[i], preview['rect'], border_radius=15)
+            
+            # Draw border (colorful if selected, regular if not)
             if preview['selected']:
-                pygame.draw.rect(screen, (255, 255, 255), preview['rect'], 4)
+                self.draw_colorful_border(screen, preview['rect'], 4)
             else:
-                pygame.draw.rect(screen, Config.COLORS['BORDER'], preview['rect'], 2)
+                pygame.draw.rect(screen, (100, 100, 100), preview['rect'], 3, border_radius=15)
             
-            # Draw label above
-            label_text = self.font_small.render(f"Color {i + 1}", True, Config.COLORS['TEXT'])
-            label_rect = label_text.get_rect(center=(preview['rect'].centerx, preview['rect'].top - 20))
-            screen.blit(label_text, label_rect)
+            # Draw simple label above
+            label_text = f"Color {i + 1}"
+            label_surface = self.font_small.render(label_text, True, (255, 255, 255))
+            label_rect = label_surface.get_rect(center=(preview['rect'].centerx, preview['rect'].top - 30))
+            screen.blit(label_surface, label_rect)
         
         # Draw color picker
         self.color_picker.draw(screen)
         
-        # Draw reset button
-        color = Config.COLORS['BUTTON_HOVER'] if self.reset_colors_button['hovered'] else Config.COLORS['UI_BACKGROUND']
-        pygame.draw.rect(screen, color, self.reset_colors_button['rect'])
-        pygame.draw.rect(screen, Config.COLORS['BORDER'], self.reset_colors_button['rect'], 3)
-        
-        text = self.font_button.render(self.reset_colors_button['text'], True, Config.COLORS['TEXT'])
-        text_rect = text.get_rect(center=self.reset_colors_button['rect'].center)
-        screen.blit(text, text_rect)
+        # Draw reset button with fun styling
+        color = (255, 200, 100) if self.reset_colors_button['hovered'] else (200, 150, 255)
+        self.draw_button_with_shadow(screen, self.reset_colors_button['rect'], color, (100, 100, 100),
+                                   self.reset_colors_button['text'], self.font_button, (50, 50, 50),
+                                   self.reset_colors_button['hovered'])

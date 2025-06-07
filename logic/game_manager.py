@@ -1,5 +1,7 @@
 import pygame
 import time
+import math
+import random
 from view.config import Config
 from view.ui import UI
 from view.map_frame import MapFrame
@@ -32,7 +34,112 @@ class GameManager:
         self.puzzle_valid = False 
         self.eraser_mode = False
         self.action_history = []
-        self.completion_time = None 
+        self.completion_time = None
+        
+        # Animation and visual enhancement variables
+        self.completion_stars = []
+
+    def generate_completion_stars(self):
+        """Generate celebration stars when puzzle is completed."""
+        self.completion_stars = []
+        for _ in range(20):
+            x = random.randint(100, Config.SCREEN_WIDTH - 100)
+            y = random.randint(100, Config.SCREEN_HEIGHT - 200)
+            size = random.randint(4, 12)
+            speed = random.uniform(1.0, 3.0)
+            angle = random.uniform(0, math.pi * 2)
+            self.completion_stars.append({
+                'x': x, 'y': y, 'size': size, 
+                'speed': speed, 'angle': angle,
+                'life': 1.0, 'original_size': size
+            })
+
+    def draw_star(self, screen, x, y, size, color=(255, 255, 100)):
+        """Draw a cute star shape (same as menu)."""
+        points = []
+        for i in range(10):
+            angle = i * math.pi / 5
+            if i % 2 == 0:
+                # Outer points
+                px = x + size * math.cos(angle)
+                py = y + size * math.sin(angle)
+            else:
+                # Inner points
+                px = x + (size * 0.4) * math.cos(angle)
+                py = y + (size * 0.4) * math.sin(angle)
+            points.append((px, py))
+        pygame.draw.polygon(screen, color, points)
+
+    def draw_gradient_background(self, screen):
+        """Draw a gentle gradient background for gameplay."""
+        # Softer gradient for gameplay (less distracting than menu)
+        for y in range(Config.SCREEN_HEIGHT):
+            ratio = y / Config.SCREEN_HEIGHT
+            r = int(240 + (250 - 240) * ratio)  # Very light blue to white
+            g = int(248 + (255 - 248) * ratio)
+            b = int(255)
+            color = (r, g, b)
+            pygame.draw.line(screen, color, (0, y), (Config.SCREEN_WIDTH, y))
+
+    def draw_completion_stars(self, screen):
+        """Draw celebration stars when puzzle is completed."""
+        for star in self.completion_stars[:]:  # Copy list to allow removal
+            # Update star position
+            star['x'] += math.cos(star['angle']) * star['speed']
+            star['y'] += math.sin(star['angle']) * star['speed']
+            star['life'] -= 0.01
+            
+            if star['life'] <= 0:
+                self.completion_stars.remove(star)
+                continue
+            
+            # Draw star with fading effect
+            alpha = star['life']
+            size = int(star['original_size'] * alpha)
+            brightness = int(255 * alpha)
+            color = (brightness, brightness, 100)
+            
+            if size > 0:
+                self.draw_star(screen, star['x'], star['y'], size, color)
+
+    def draw_fancy_border(self, screen, rect, thickness=3, animated=False):
+        """Draw a colorful animated border."""
+        colors = [
+            (100, 200, 255),  # Bright blue
+            (255, 100, 150),  # Bright pink  
+            (100, 255, 150),  # Bright green
+            (255, 255, 100),  # Bright yellow
+        ]
+        
+        for i in range(thickness):
+            if animated:
+                color_idx = int(self.animation_time * 2 + i) % len(colors)
+            else:
+                color_idx = i % len(colors)
+            color = colors[color_idx]
+            pygame.draw.rect(screen, color, rect.inflate(i*2, i*2), 1)
+
+    def draw_button_with_shadow(self, screen, rect, color, border_color, text, font, text_color, animated=False):
+        """Draw a button with shadow and fun styling (same as menu)."""
+        # Shadow
+        shadow_rect = rect.copy()
+        shadow_rect.x += 4
+        shadow_rect.y += 4
+        pygame.draw.rect(screen, (50, 50, 50), shadow_rect, border_radius=15)
+        
+        # Main button with rounded corners
+        button_color = color
+        if animated:
+            pulse = abs(math.sin(self.animation_time * 4)) * 30
+            button_color = tuple(min(255, int(c + pulse)) for c in color)
+        
+        pygame.draw.rect(screen, button_color, rect, border_radius=15)
+        pygame.draw.rect(screen, border_color, rect, 3, border_radius=15)
+        
+        # Button text
+        text_surface = font.render(text, True, text_color)
+        text_rect = text_surface.get_rect(center=rect.center)
+        screen.blit(text_surface, text_rect)
 
     def start_level(self, level):
         """Start a specific level."""
@@ -46,6 +153,10 @@ class GameManager:
         self.game_completed = False
         self.puzzle_valid = False
         self.ui = UI(self)
+        
+        # Reset animations
+        self.animation_time = 0
+        self.completion_stars = []
         
         # Create map frame centered on screen
         # Account for UI height at the bottom
@@ -154,6 +265,8 @@ class GameManager:
                 
         if self.puzzle_valid and self.completion_time is None:
             self.completion_time = time.time()
+            # Generate celebration stars when successfully completed
+            self.generate_completion_stars()
 
         return True
     
@@ -179,9 +292,11 @@ class GameManager:
         self.action_history = [] 
         self.eraser_mode = False
         self.selected_color = 0
+        self.completion_stars = []
     
     def update(self, dt):
         """Update game state."""
+        
         if self.current_state == self.STATE_PLAYING and self.ui:
             self.ui.update(dt)
     
@@ -191,8 +306,8 @@ class GameManager:
             self.menu.draw(self.screen)
             
         elif self.current_state == self.STATE_PLAYING:
-            # Clear screen
-            self.screen.fill(Config.COLORS['BACKGROUND'])
+            # Draw gradient background
+            self.draw_gradient_background(self.screen)
             
             # Draw map frame
             if self.map_frame:
@@ -202,67 +317,111 @@ class GameManager:
             if self.ui:
                 self.ui.draw(self.screen)
             
-            # Draw completion message
+            # Draw completion effects
             if self.game_completed:
                 self.draw_completion_message()
+                if self.puzzle_valid:
+                    # Draw celebration stars
+                    self.draw_completion_stars(self.screen)
             
-            # Draw level name in top-left
+            # Draw level name in top-left with enhanced styling
             self.draw_level_name()
     
     def draw_completion_message(self):
-        """Draw completion message - shows if puzzle is valid or not."""
-        font = pygame.font.Font(None, 48)
+        """Draw completion message with enhanced styling."""
+        font_large = pygame.font.Font(None, 64)
+        font_medium = pygame.font.Font(None, 48)
+        font_small = pygame.font.Font(None, 36)
         
         if self.puzzle_valid:
-            text = font.render("Puzzle Completed Successfully!", True, Config.COLORS['TEXT'])
-            color = (0, 255, 0)  # Green for success
+            # Success message with celebration
+            main_text = "Puzzle Completed Successfully!"
+            text_surface = font_large.render(main_text, True, (255, 255, 255))
+            bg_color = (50, 200, 50)  # Green for success
+            border_color = (100, 255, 100)
         else:
-            text = font.render("Invalid Solution - Adjacent regions have same color!", True, Config.COLORS['TEXT'])
-            color = (255, 0, 0)  # Red for invalid
+            # Invalid solution message
+            main_text = "Oops! Adjacent regions have the same color!"
+            text_surface = font_large.render(main_text, True, (255, 255, 255))
+            bg_color = (200, 50, 50)  # Red for invalid
+            border_color = (255, 100, 100)
         
-        text_rect = text.get_rect(center=(Config.SCREEN_WIDTH // 2, 50))
+        text_rect = text_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 80))
         
-        # Draw background for text
-        bg_rect = text_rect.inflate(20, 10)
-        pygame.draw.rect(self.screen, Config.COLORS['UI_BACKGROUND'], bg_rect)
-        pygame.draw.rect(self.screen, color, bg_rect, 3)  # Border color indicates validity
+        # Enhanced background with shadow and rounded corners
+        bg_rect = text_rect.inflate(60, 30)
+        shadow_rect = bg_rect.copy()
+        shadow_rect.x += 6
+        shadow_rect.y += 6
         
-        self.screen.blit(text, text_rect)
+        # Draw shadow
+        pygame.draw.rect(self.screen, (30, 30, 30), shadow_rect, border_radius=20)
         
-        # Draw time taken
+        # Draw main background with pulsing effect
+        if self.puzzle_valid:
+            pulse = abs(math.sin(self.animation_time * 3)) * 30
+            final_bg_color = tuple(min(255, int(c + pulse)) for c in bg_color)
+        else:
+            final_bg_color = bg_color
+        
+        pygame.draw.rect(self.screen, final_bg_color, bg_rect, border_radius=20)
+        
+        self.screen.blit(text_surface, text_rect)
+        
+        # Enhanced time display
         elapsed = self.get_elapsed_time()
         minutes = int(elapsed // 60)
         seconds = int(elapsed % 60)
-        if self.puzzle_valid:
-            time_text = font.render(f"Final Time: {minutes:02d}:{seconds:02d}", True, Config.COLORS['TEXT'])
-        else:
-            time_text = font.render(f"Time: {minutes:02d}:{seconds:02d}", True, Config.COLORS['TEXT'])
         
-        time_rect = time_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 100))
-        self.screen.blit(time_text, time_rect)
-        
-        # Draw appropriate message
-        font_small = pygame.font.Font(None, 32)
         if self.puzzle_valid:
-            menu_text = font_small.render("Congrats You Solve it Right!", True, Config.COLORS['TEXT'])
+            time_text = f"Final Time: {minutes:02d}:{seconds:02d}"
+            time_color = (255, 255, 100)  # Gold color for completion time
         else:
-            menu_text = font_small.render("Keep trying! Change colors to fix conflicts", True, Config.COLORS['TEXT'])
-        menu_rect = menu_text.get_rect(center=(Config.SCREEN_WIDTH // 2, 150))
-        self.screen.blit(menu_text, menu_rect)
+            time_text = f"Current Time: {minutes:02d}:{seconds:02d}"
+            time_color = (255, 255, 255)
+        
+        time_surface = font_medium.render(time_text, True, time_color)
+        time_rect = time_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 140))
+        
+        # Time background
+        time_bg_rect = time_rect.inflate(40, 20)
+        pygame.draw.rect(self.screen, (50, 50, 50, 128), time_bg_rect, border_radius=15)
+        self.screen.blit(time_surface, time_rect)
+        
+        # Enhanced message with fun styling
+        if self.puzzle_valid:
+            congrats_text = "Amazing! You solved it perfectly!"
+            msg_color = (255, 255, 100)
+        else:
+            congrats_text = "Keep trying! Change colors to fix conflicts"
+            msg_color = (255, 200, 200)
+        
+        msg_surface = font_small.render(congrats_text, True, msg_color)
+        msg_rect = msg_surface.get_rect(center=(Config.SCREEN_WIDTH // 2, 190))
+        
+        # Message background
+        msg_bg_rect = msg_rect.inflate(30, 15)
+        pygame.draw.rect(self.screen, (30, 30, 30, 100), msg_bg_rect, border_radius=10)
+        self.screen.blit(msg_surface, msg_rect)
     
     def draw_level_name(self):
-        """Draw the current level name."""
+        """Draw the current level name with enhanced styling."""
         if self.current_level:
-            font = pygame.font.Font(None, 36)
-            text = font.render(self.current_level['name'], True, Config.COLORS['TEXT'])
-            text_rect = text.get_rect(topleft=(20, 20))
+            font = pygame.font.Font(None, 42)
+            level_text = f"{self.current_level['name']}"
+            text_surface = font.render(level_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(topleft=(30, 30))
             
-            # Draw background
-            bg_rect = text_rect.inflate(20, 10)
-            pygame.draw.rect(self.screen, Config.COLORS['UI_BACKGROUND'], bg_rect)
-            pygame.draw.rect(self.screen, Config.COLORS['BORDER'], bg_rect, 2)
+            # Enhanced background with shadow
+            bg_rect = text_rect.inflate(30, 20)
+            shadow_rect = bg_rect.copy()
+            shadow_rect.x += 3
+            shadow_rect.y += 3
             
-            self.screen.blit(text, text_rect)
+            # Draw shadow
+            pygame.draw.rect(self.screen, (30, 30, 30), shadow_rect, border_radius=15)
+            
+            self.screen.blit(text_surface, text_rect)
     
     def undo_last_action(self):
         """Undo the last coloring action."""
@@ -280,6 +439,9 @@ class GameManager:
             self.map_frame.regions[region_id].set_color(old_color)
 
         self.completion_time = None
+        # Clear celebration effects
+        self.completion_stars = []
+        
         # Check completion state again
         if self.are_all_regions_colored():
             self.check_completion()
