@@ -13,6 +13,9 @@ class Config:
         'UI_BACKGROUND': (240, 240, 240),  # Light gray
         'TEXT': (0, 0, 0),             # Black
         'BUTTON_HOVER': (220, 220, 220),  # Light gray
+        'HELP_BUTTON': (200, 200, 200),
+        'HELP_PANEL': (240, 240, 240, 230),  # Semi-transparent
+        'HELP_TEXT': (0, 0, 0),
     }
     
     UI_HEIGHT = 80
@@ -36,6 +39,11 @@ class Config:
     
     # Current game colors (can be customized)
     GAME_COLORS = DEFAULT_GAME_COLORS.copy()
+
+    HELP_BUTTON_RADIUS = 20
+    HELP_PANEL_WIDTH = 400
+    HELP_PANEL_HEIGHT = 300
+    HELP_TEXT_MARGIN = 20
     
     @staticmethod
     def reset_colors():
