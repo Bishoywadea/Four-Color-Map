@@ -35,11 +35,13 @@ class GameManager:
         self.eraser_mode = False
         self.action_history = []
         self.completion_time = None
+        self.activity = None
         
         # Animation and visual enhancement variables
         self.completion_stars = []
 
     def set_activity(self, activity):
+        """Set reference to the activity for communication."""
         self.activity = activity
 
     def generate_completion_stars(self):
@@ -105,45 +107,6 @@ class GameManager:
             if size > 0:
                 self.draw_star(screen, star['x'], star['y'], size, color)
 
-    def draw_fancy_border(self, screen, rect, thickness=3, animated=False):
-        """Draw a colorful animated border."""
-        colors = [
-            (100, 200, 255),  # Bright blue
-            (255, 100, 150),  # Bright pink  
-            (100, 255, 150),  # Bright green
-            (255, 255, 100),  # Bright yellow
-        ]
-        
-        for i in range(thickness):
-            if animated:
-                color_idx = int(self.animation_time * 2 + i) % len(colors)
-            else:
-                color_idx = i % len(colors)
-            color = colors[color_idx]
-            pygame.draw.rect(screen, color, rect.inflate(i*2, i*2), 1)
-
-    def draw_button_with_shadow(self, screen, rect, color, border_color, text, font, text_color, animated=False):
-        """Draw a button with shadow and fun styling (same as menu)."""
-        # Shadow
-        shadow_rect = rect.copy()
-        shadow_rect.x += 4
-        shadow_rect.y += 4
-        pygame.draw.rect(screen, (50, 50, 50), shadow_rect, border_radius=15)
-        
-        # Main button with rounded corners
-        button_color = color
-        if animated:
-            pulse = abs(math.sin(self.animation_time * 4)) * 30
-            button_color = tuple(min(255, int(c + pulse)) for c in color)
-        
-        pygame.draw.rect(screen, button_color, rect, border_radius=15)
-        pygame.draw.rect(screen, border_color, rect, 3, border_radius=15)
-        
-        # Button text
-        text_surface = font.render(text, True, text_color)
-        text_rect = text_surface.get_rect(center=rect.center)
-        screen.blit(text_surface, text_rect)
-
     def start_level(self, level):
         """Start a specific level."""
         self.current_level = level
@@ -201,12 +164,7 @@ class GameManager:
                     region_id = self.map_frame.detect_click(event.pos)
                     if region_id is not None:
                         self.color_region(region_id, self.selected_color)
-    
-    def return_to_menu(self):
-        """Return to the main menu."""
-        self.current_state = self.STATE_MENU
-        self.menu.selected_level = None
-        
+            
     def color_region(self, region_id, color_index):
         """Color a region with the specified color or erase it."""
         if region_id not in self.map_frame.regions:
@@ -241,6 +199,10 @@ class GameManager:
             # Reset completion state if puzzle is being modified
             self.game_completed = False
             self.puzzle_valid = False
+
+        # Update toolbar state after coloring
+        if self.activity and hasattr(self.activity, 'update_toolbar_state'):
+            self.activity.update_toolbar_state()
         
         return True
     
@@ -296,10 +258,11 @@ class GameManager:
         self.eraser_mode = False
         self.selected_color = 0
         self.completion_stars = []
+        if self.activity and hasattr(self.activity, 'update_toolbar_state'):
+            self.activity.update_toolbar_state()
     
     def update(self, dt):
         """Update game state."""
-        
         if self.current_state == self.STATE_PLAYING and self.ui:
             self.ui.update(dt)
     
@@ -452,30 +415,15 @@ class GameManager:
             self.game_completed = False
             self.puzzle_valid = False
 
-    def handle_keyboard_shortcuts(self, event):
-        """Handle keyboard shortcuts for zooming and other actions."""
-        if event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
-            # Zoom in with + or =
-            if self.map_frame:
-                self.map_frame.zoom_level = min(
-                    self.map_frame.zoom_level + self.map_frame.zoom_speed,
-                    self.map_frame.max_zoom
-                )
-        elif event.key == pygame.K_MINUS:
-            # Zoom out with -
-            if self.map_frame:
-                self.map_frame.zoom_level = max(
-                    self.map_frame.zoom_level - self.map_frame.zoom_speed,
-                    self.map_frame.min_zoom
-                )
-        elif event.key == pygame.K_0:
-            # Reset view with 0
-            if self.map_frame:
-                self.map_frame.reset_view()
-        elif event.key == pygame.K_SPACE:
-            # Center map with spacebar
-            if self.map_frame:
-                self.map_frame.center_map()
+    def select_color(self, color_index):
+        """Select a color for painting regions."""
+        self.selected_color = color_index
+        self.eraser_mode = False
+    
+    def select_eraser(self):
+        """Select eraser mode."""
+        self.eraser_mode = True
+        self.selected_color = -1 
 
     def refresh_colors(self):
         """Refresh the display with new colors"""
