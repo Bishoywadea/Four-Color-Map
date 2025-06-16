@@ -68,7 +68,6 @@ class Button:
 class UI:
     def __init__(self, game_manager):
         self.game_manager = game_manager
-        
     
     def handle_event(self, event):
         """Handle UI events."""
@@ -80,7 +79,9 @@ class UI:
     
     def draw(self, surface):
         """Draw minimal UI - just the timer at the bottom"""
+        # Draw a small status bar at the bottom
         ui_height = 40
+        # Draw timer
         self.draw_timer(surface, ui_height)
     
     def draw_timer(self, surface, ui_height):
@@ -89,13 +90,13 @@ class UI:
         minutes = int(elapsed_time // 60)
         seconds = int(elapsed_time % 60)
         
-        font = pygame.font.Font(None, 36)
+        font = pygame.font.Font(None, 32)
         timer_text = f"Time: {minutes:02d}:{seconds:02d}"
         text_surface = font.render(timer_text, True, Config.COLORS['TEXT'])
         
-        # Position timer in the middle of UI area
+        # Position timer in the middle of status bar
         text_rect = text_surface.get_rect()
         text_rect.center = (Config.SCREEN_WIDTH // 2, 
-                          Config.SCREEN_HEIGHT - Config.UI_HEIGHT // 2 - 50)
+                          Config.SCREEN_HEIGHT - ui_height // 2  -50 )
         
         surface.blit(text_surface, text_rect)

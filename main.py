@@ -1,4 +1,3 @@
-# main.py
 import pygame
 import sys
 from logic.game_manager import GameManager
