@@ -140,6 +140,13 @@ class FourColorMap(Activity):
         toolbar_box.toolbar.insert(self.zoom_reset_button, -1)
         self.zoom_reset_button.show()
 
+        # Menu button
+        self.menu_button = ToolButton('go-home')  # or pick a more specific icon!
+        self.menu_button.set_tooltip(_('Main Menu'))
+        self.menu_button.connect('clicked', self._menu_cb)
+        toolbar_box.toolbar.insert(self.menu_button, -1)
+        self.menu_button.show()
+
         # Help button
         self.help_button = ToolButton('toolbar-help')
         self.help_button.set_tooltip(_('Help'))
@@ -394,6 +401,16 @@ class FourColorMap(Activity):
         """Handle zoom reset"""
         if self.game.game and self.game.game.map_frame:
             self.game.game.map_frame.reset_view()
+
+    def _menu_cb(self, button):
+        """Return to the level category menu."""
+        if hasattr(self.game, 'game') and self.game.game:
+            if hasattr(self.game.game, 'return_to_menu'):
+                self.game.game.return_to_menu()
+        if hasattr(self.game, 'show_help'):
+            self.game.show_help = False
+        if hasattr(self.game, 'show_color_warning'):
+            self.game.show_color_warning = False
 
     def _help_cb(self, button):
         """Handle help button"""
