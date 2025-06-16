@@ -39,6 +39,9 @@ class GameManager:
         # Animation and visual enhancement variables
         self.completion_stars = []
 
+    def set_activity(self, activity):
+        self.activity = activity
+
     def generate_completion_stars(self):
         """Generate celebration stars when puzzle is completed."""
         self.completion_stars = []
@@ -176,13 +179,16 @@ class GameManager:
     def handle_event(self, event):
         """Handle game events."""
         if self.current_state == self.STATE_MENU:
+            previous_state = self.current_state
             if self.menu.handle_event(event):
                 # Level was selected
                 self.start_level(self.menu.selected_level)
+                # Refresh colors when starting a level
+                self.refresh_colors()
 
         elif self.current_state == self.STATE_PLAYING:
             if self.ui.handle_event(event):
-                return  # UI handled the event
+                return 
             
             if self.map_frame and self.map_frame.handle_zoom(event):
                 return
@@ -195,9 +201,6 @@ class GameManager:
                     region_id = self.map_frame.detect_click(event.pos)
                     if region_id is not None:
                         self.color_region(region_id, self.selected_color)
-            
-            if event.type == pygame.KEYDOWN:
-                self.handle_keyboard_shortcuts(event)
     
     def return_to_menu(self):
         """Return to the main menu."""
@@ -473,3 +476,13 @@ class GameManager:
             # Center map with spacebar
             if self.map_frame:
                 self.map_frame.center_map()
+
+    def refresh_colors(self):
+        """Refresh the display with new colors"""
+        # Force a redraw of the current state
+        if self.current_state == 'playing' and self.map_frame:
+            pass 
+        
+        # Notify activity to refresh toolbar colors
+        if self.activity:
+            self.activity._refresh_color_palette()
