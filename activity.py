@@ -89,7 +89,7 @@ class FourColorMap(Activity):
         self.customize_colors_button.show()
 
         # Eraser button
-        self.eraser_button = ToggleToolButton('activity-eraser')
+        self.eraser_button = ToggleToolButton('edit-clear')
         self.eraser_button.set_tooltip(_('Eraser'))
         self.eraser_button.connect('toggled', self._eraser_toggled_cb)
         toolbar_box.toolbar.insert(self.eraser_button, -1)
@@ -109,7 +109,7 @@ class FourColorMap(Activity):
         self.undo_button.show()
 
         # Clear/Reset button
-        self.clear_button = ToolButton('edit-clear')
+        self.clear_button = ToolButton('emblem-busy')
         self.clear_button.set_tooltip(_('Clear map'))
         self.clear_button.connect('clicked', self._clear_cb)
         toolbar_box.toolbar.insert(self.clear_button, -1)
