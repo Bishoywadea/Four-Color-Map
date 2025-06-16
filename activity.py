@@ -89,7 +89,7 @@ class FourColorMap(Activity):
         self.customize_colors_button.show()
 
         # Eraser button
-        self.eraser_button = ToggleToolButton('tool-eraser')
+        self.eraser_button = ToggleToolButton('activity-eraser')
         self.eraser_button.set_tooltip(_('Eraser'))
         self.eraser_button.connect('toggled', self._eraser_toggled_cb)
         toolbar_box.toolbar.insert(self.eraser_button, -1)
