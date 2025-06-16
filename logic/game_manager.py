@@ -434,3 +434,7 @@ class GameManager:
         # Notify activity to refresh toolbar colors
         if self.activity:
             self.activity._refresh_color_palette()
+
+    def return_to_menu(self):
+        self.current_state = self.STATE_MENU
+        self.menu.selected_level = None
