@@ -17,11 +17,12 @@
 from view.config import Config
 import math
 
+
 def get_level_1():
     """Level 1: Simple 6-region map."""
     center_x = Config.SCREEN_WIDTH // 2
     center_y = Config.SCREEN_HEIGHT // 2
-    
+
     regions_data = [
         {
             'id': 0,
@@ -37,7 +38,7 @@ def get_level_1():
         },
         {
             'id': 1,
-            'name': 'Region B', 
+            'name': 'Region B',
             'points': [
                 (center_x - 50, center_y - 120),
                 (center_x + 50, center_y - 110),
@@ -92,47 +93,50 @@ def get_level_1():
             'neighbors': [3, 4]
         }
     ]
-    
+
     return regions_data
+
 
 def get_level_2():
     """Level: Pizza-shaped map with 8 slices."""
     center_x = Config.SCREEN_WIDTH // 2
     center_y = Config.SCREEN_HEIGHT // 2
-    
+
     radius = 150
     num_slices = 8
     angle_per_slice = 360 / num_slices
     points_per_arc = 5
-    
+
     regions_data = []
-    
+
     for i in range(num_slices):
         start_angle = i * angle_per_slice
         end_angle = (i + 1) * angle_per_slice
-        
+
         points = [[center_x, center_y]]
-        
+
         for j in range(points_per_arc + 1):
-            angle = start_angle + (end_angle - start_angle) * j / points_per_arc
+            angle = start_angle + \
+                (end_angle - start_angle) * j / points_per_arc
             angle_rad = math.radians(angle)
             x = center_x + radius * math.cos(angle_rad)
             y = center_y + radius * math.sin(angle_rad)
-            points.append([int(x), int(y)]) 
-        
+            points.append([int(x), int(y)])
+
         prev_slice = (i - 1) % num_slices
         next_slice = (i + 1) % num_slices
-        
+
         region = {
             'id': i,
             'name': f'Slice {chr(65 + i)}',
-            'points': points, 
+            'points': points,
             'neighbors': [prev_slice, next_slice]
         }
-        
+
         regions_data.append(region)
-    
+
     return regions_data
+
 
 def get_level_3():
     """US States map - auto-generated from GeoJSON."""
@@ -1970,11 +1974,12 @@ def get_level_3():
 
     return regions_data
 
+
 def get_level_4():
     """Level: Geometric shapes pattern for four-color map."""
     center_x = Config.SCREEN_WIDTH // 2
     center_y = Config.SCREEN_HEIGHT // 2
-    
+
     regions_data = [
         {
             'id': 0,
@@ -2071,8 +2076,9 @@ def get_level_4():
             'neighbors': [3, 5]
         }
     ]
-    
+
     return regions_data
+
 
 def get_level_5():
     """Eg map - auto-generated from GeoJSON."""
@@ -3063,6 +3069,7 @@ def get_level_5():
     ]
 
     return regions_data
+
 
 def get_level_6():
     """In map - auto-generated from GeoJSON."""
@@ -5146,6 +5153,7 @@ def get_level_6():
     ]
 
     return regions_data
+
 
 def get_level_7():
     """Ng map - auto-generated from GeoJSON."""
@@ -7693,49 +7701,49 @@ def get_level_7():
 LEVELS = [
     {
         'id': 1,
-        'tag':"polygons",
+        'tag': "polygons",
         'name': 'Simple Map',
         'description': '6 regions - Easy',
         'data_func': get_level_1
     },
     {
         'id': 2,
-        'tag':"polygons",
+        'tag': "polygons",
         'name': 'pizza',
         'description': '8 regions - Medium',
         'data_func': get_level_2
     },
     {
         'id': 3,
-        'tag':"countries",
+        'tag': "countries",
         'name': 'United States',
         'description': '51 regions - Hard',
         'data_func': get_level_3
     },
     {
         'id': 4,
-        'tag':"polygons",
+        'tag': "polygons",
         'name': 'polygons',
         'description': '7 regions - Easy',
         'data_func': get_level_4
     },
     {
         'id': 5,
-        'tag':"countries",
+        'tag': "countries",
         'name': 'egypt',
         'description': '26 regions - Hard',
         'data_func': get_level_5
     },
     {
         'id': 6,
-        'tag':"countries",
+        'tag': "countries",
         'name': 'india',
         'description': '35 regions - Hard',
         'data_func': get_level_6
     },
     {
         'id': 7,
-        'tag':"countries",
+        'tag': "countries",
         'name': 'nigeria',
         'description': '37 regions - Hard',
         'data_func': get_level_7
