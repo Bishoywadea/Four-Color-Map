@@ -117,26 +117,12 @@ class FourColorMap(Activity):
         separator.show()
 
         # Zoom buttons
-        self.zoom_out_button = ToolButton('zoom-out')
-        self.zoom_out_button.set_tooltip(_('Zoom out'))
-        self.zoom_out_button.connect('clicked', self._zoom_out_cb)
-        toolbar_box.toolbar.insert(self.zoom_out_button, -1)
-        self.zoom_out_button.show()
-
-        self.zoom_in_button = ToolButton('zoom-in')
-        self.zoom_in_button.set_tooltip(_('Zoom in'))
-        self.zoom_in_button.connect('clicked', self._zoom_in_cb)
-        toolbar_box.toolbar.insert(self.zoom_in_button, -1)
-        self.zoom_in_button.show()
-
-        self.zoom_reset_button = ToolButton('zoom-original')
-        self.zoom_reset_button.set_tooltip(_('Reset zoom'))
-        self.zoom_reset_button.connect('clicked', self._zoom_reset_cb)
-        toolbar_box.toolbar.insert(self.zoom_reset_button, -1)
-        self.zoom_reset_button.show()
+        self.zoom_button = self._create_zoom_palette_button()
+        toolbar_box.toolbar.insert(self.zoom_button, -1)
+        self.zoom_button.show()
 
         # Menu button
-        self.menu_button = ToolButton('go-home')  # or pick a more specific icon!
+        self.menu_button = ToolButton('go-home')
         self.menu_button.set_tooltip(_('Main Menu'))
         self.menu_button.connect('clicked', self._menu_cb)
         toolbar_box.toolbar.insert(self.menu_button, -1)
@@ -181,6 +167,7 @@ class FourColorMap(Activity):
         color_button.set_palette(palette)
         
         return color_button
+    
 
     def _create_color_palette(self):
         """Create the color palette with current colors"""
@@ -375,6 +362,50 @@ class FourColorMap(Activity):
         """Handle clear/reset"""
         if self.game.game:
             self.game.game.reset_game()
+
+    def _create_zoom_palette_button(self):
+        """Create a zoom button with a palette for zoom options."""
+        # Create the main button that will be visible on the toolbar
+        zoom_button = ToolButton('zoom-original')
+        zoom_button.set_tooltip(_('Zoom options'))
+        self.zoom_palette_button = zoom_button # Store a reference
+
+        # Create the palette that will pop up
+        palette = self._create_zoom_palette()
+        zoom_button.set_palette(palette)
+        
+        return zoom_button
+
+    def _create_zoom_palette(self):
+        """Create the palette containing the individual zoom buttons."""
+        palette = Palette(_('Zoom'))
+        
+        # Use an HBox to arrange the buttons horizontally
+        hbox = Gtk.HBox()
+        
+        # --- Zoom In Button ---
+        zoom_in = ToolButton('zoom-in')
+        zoom_in.set_tooltip(_('Zoom in'))
+        # We use a lambda to call the original function and then close the palette
+        zoom_in.connect('clicked', lambda w: (self._zoom_in_cb(w), self.zoom_palette_button.palette.popdown()))
+        hbox.pack_start(zoom_in, False, False, 2)
+
+        # --- Zoom Out Button ---
+        zoom_out = ToolButton('zoom-out')
+        zoom_out.set_tooltip(_('Zoom out'))
+        zoom_out.connect('clicked', lambda w: (self._zoom_out_cb(w), self.zoom_palette_button.palette.popdown()))
+        hbox.pack_start(zoom_out, False, False, 2)
+
+        # --- Reset Zoom Button ---
+        zoom_reset = ToolButton('zoom-original')
+        zoom_reset.set_tooltip(_('Reset zoom'))
+        zoom_reset.connect('clicked', lambda w: (self._zoom_reset_cb(w), self.zoom_palette_button.palette.popdown()))
+        hbox.pack_start(zoom_reset, False, False, 2)
+        
+        palette.set_content(hbox)
+        hbox.show_all()
+        
+        return palette
 
     def _zoom_in_cb(self, button):
         """Handle zoom in"""
