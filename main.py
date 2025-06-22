@@ -1,4 +1,3 @@
-# main.py
 import pygame
 import sys
 from logic.game_manager import GameManager
@@ -17,12 +16,23 @@ class main:
         self.canvas = None
         self.score = [0, 0]
         self.show_help = False
+        self.show_color_warning = False
         self.game = None
-        self.help_pos = None 
         self.question_text = None 
         self.close_text = None 
+        self.warning_text = None 
         self.help_text = None 
+        self.activity = None
 
+    def set_activity(self, activity):
+        """Set reference to the activity."""
+        self.activity = activity
+        if self.game:
+            self.game.set_activity(activity)
+
+    def toggle_help(self):
+        """Toggle help display"""
+        self.show_help = not self.show_help
 
     def set_canvas(self, canvas):
         self.canvas = canvas
@@ -45,10 +55,9 @@ class main:
                 pygame.display.set_mode(event.size, pygame.RESIZABLE)
                 break
             elif event.type == pygame.MOUSEBUTTONUP:
-                if self.help_pos and self.help_pos.collidepoint(pygame.mouse.get_pos()):
-                    self.show_help = not self.show_help
+                if self.show_color_warning:
+                    self.show_color_warning = False
                 elif self.show_help:
-                    # If help is showing, clicking anywhere else should close it
                     self.show_help = False
                 else:
                     # Pass event to game manager
@@ -60,20 +69,13 @@ class main:
                     self.game.handle_event(event)
     
     def draw_help(self, screen):
-        # Draw the help button
-        pygame.draw.circle(
-            screen,
-            Config.COLORS['UI_BACKGROUND'],
-            self.help_pos.center,
-            40,
-        )
-        
         if self.show_help:
             # Calculate size based on text
             padding = 20
             spacing = 10
             total_height = sum(text.get_height() + spacing for text in self.help_text) + padding * 2
             max_width = max(text.get_width() for text in self.help_text) + padding * 2
+            
             # Draw the help panel background
             help_panel = pygame.Surface((max_width, total_height), pygame.SRCALPHA)
             help_panel.fill((80, 80, 120, 230))  # Background color
@@ -97,16 +99,45 @@ class main:
                 text_x = panel_x + (max_width - text.get_width()) // 2
                 screen.blit(text, (text_x, y_offset))
                 y_offset += text.get_height() + spacing
-            
-            q_x = self.help_pos.centerx - self.question_text.get_width() // 2
-            q_y = self.help_pos.centery - self.question_text.get_height() // 2
-            screen.blit(self.close_text, (q_x, q_y))
-        else:
-            # Draw the question mark on help button
-            q_x = self.help_pos.centerx - self.question_text.get_width() // 2
-            q_y = self.help_pos.centery - self.question_text.get_height() // 2
-            screen.blit(self.question_text, (q_x, q_y))
 
+    def draw_warning_panel(self, screen):
+        """Draw the color change warning panel"""
+        if self.show_color_warning:
+            # Calculate size based on text
+            padding = 30
+            spacing = 15
+            total_height = sum(text.get_height() + spacing for text in self.warning_text) + padding * 2
+            max_width = max(text.get_width() for text in self.warning_text) + padding * 2
+            
+            # Draw the warning panel background (using warning colors)
+            warning_panel = pygame.Surface((max_width, total_height), pygame.SRCALPHA)
+            warning_panel.fill((200, 100, 50, 240))  # Orange-ish warning color
+            
+            # Draw border
+            pygame.draw.rect(
+                warning_panel,
+                (255, 150, 50),  # Bright orange border
+                (0, 0, max_width, total_height),
+                4
+            )
+            
+            # Position the panel centered on screen
+            panel_x = (Config.SCREEN_WIDTH - max_width) // 2
+            panel_y = (Config.SCREEN_HEIGHT - total_height) // 2
+            screen.blit(warning_panel, (panel_x, panel_y))
+            
+            # Draw warning text
+            y_offset = panel_y + padding
+            for i, text in enumerate(self.warning_text):
+                text_x = panel_x + (max_width - text.get_width()) // 2
+                screen.blit(text, (text_x, y_offset))
+                y_offset += text.get_height() + spacing
+            
+            # Draw "Click anywhere to close" at the bottom
+            close_font = pygame.font.Font(None, 36)
+            close_text = close_font.render(_("Click anywhere to close"), True, (255, 255, 200))
+            close_rect = close_text.get_rect(center=(panel_x + max_width // 2, panel_y + total_height - 25))
+            screen.blit(close_text, close_rect)
 
     def run(self):
         # Initialize pygame
@@ -114,8 +145,6 @@ class main:
 
         # Initialize fonts and help content
         font = pygame.font.Font(None, 64)
-        self.question_text = font.render("?", True, Config.COLORS['BORDER'])
-        self.close_text = font.render("X", True, Config.COLORS['BORDER'])
         self.help_text = [
             font.render(line, True, (255, 255, 255))  # White text
             for line in [
@@ -128,15 +157,27 @@ class main:
             ]
         ]
         
-        self.help_pos = pygame.Rect(
-            (2 * Config.SCREEN_WIDTH ),
-            (Config.SCREEN_HEIGHT * 0.1),
-            80,
-            80,
-        )
-        
+        warning_font = pygame.font.Font(None, 52)
+        self.warning_text = [
+            warning_font.render(line, True, (255, 255, 255))
+            for line in [
+                _("color Change Not Allowed"),
+                _(""),
+                _("You cannot change colors while playing!"),
+                _(""),
+                _("You have already started coloring the map."),
+                _("Changing colors now would affect the puzzle."),
+                _(""),
+                _("Please finish or reset the current game"),
+                _("before changing the color set.")
+            ]
+        ]
+
         # Initialize the game
         self.game = GameManager()
+
+        if self.activity:
+            self.game.set_activity(self.activity)
         
         # Set canvas focus if available
         if self.canvas is not None:
@@ -164,6 +205,7 @@ class main:
                 # Render everything
                 self.game.render()
                 self.draw_help(pygame.display.get_surface())
+                self.draw_warning_panel(pygame.display.get_surface()) 
                 
             pygame.display.flip()
         
