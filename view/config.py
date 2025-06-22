@@ -15,14 +15,13 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
-import pygame
 
 class Config:
 
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
     FPS = 60
-    
+
     COLORS = {
         'BACKGROUND': (70, 130, 180),  # Steel blue
         'UNCOLORED': (200, 200, 255),  # Light blue-gray
@@ -34,11 +33,11 @@ class Config:
         'HELP_PANEL': (240, 240, 240, 230),  # Semi-transparent
         'HELP_TEXT': (0, 0, 0),
     }
-    
+
     UI_HEIGHT = 80
     COLOR_BUTTON_SIZE = 50
     BUTTON_MARGIN = 10
-    
+
     BORDER_WIDTH = 2
     REGION_HOVER_ALPHA = 50
 
@@ -49,11 +48,11 @@ class Config:
 
     DEFAULT_GAME_COLORS = [
         (255, 99, 71),   # Red/Tomato
-        (100, 149, 237), # Blue/Cornflower
+        (100, 149, 237),  # Blue/Cornflower
         (255, 215, 0),   # Gold
         (50, 205, 50)    # Green/Lime
     ]
-    
+
     # Current game colors (can be customized)
     GAME_COLORS = DEFAULT_GAME_COLORS.copy()
 
@@ -61,7 +60,7 @@ class Config:
     HELP_PANEL_WIDTH = 400
     HELP_PANEL_HEIGHT = 300
     HELP_TEXT_MARGIN = 20
-    
+
     @staticmethod
     def reset_colors():
         """Reset colors to defaults."""
