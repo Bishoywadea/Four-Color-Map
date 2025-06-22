@@ -132,6 +132,8 @@ class FourColorMap(Activity):
         self.help_button = ToolButton('toolbar-help')
         self.help_button.set_tooltip(_('Help'))
         self.help_button.connect('clicked', self._help_cb)
+        toolbar_box.toolbar.insert(self.help_button, -1)
+        self.menu_button.show()
         
         # Separator before stop button
         separator = Gtk.SeparatorToolItem()
@@ -140,9 +142,6 @@ class FourColorMap(Activity):
         toolbar_box.toolbar.insert(separator, -1)
         separator.show()
         
-        toolbar_box.toolbar.insert(self.help_button, -1)
-        self.help_button.show()
-
         # Stop button
         stop_button = StopButton(self)
         toolbar_box.toolbar.insert(stop_button, -1)
