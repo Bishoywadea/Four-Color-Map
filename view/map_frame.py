@@ -169,3 +169,19 @@ class MapFrame:
         """Reset zoom and pan to default."""
         self.zoom_level = 1.0
         self.center_map()
+
+    @property
+    def offset_x(self):
+        return self.pan_offset[0]
+
+    @property
+    def offset_y(self):
+        return self.pan_offset[1]
+
+    @offset_x.setter
+    def offset_x(self, value):
+        self.pan_offset[0] = value
+
+    @offset_y.setter
+    def offset_y(self, value):
+        self.pan_offset[1] = value
