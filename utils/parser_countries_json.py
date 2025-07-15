@@ -50,9 +50,6 @@ def generate_regions_from_geojson(
     # Load GeoJSON
     gdf = gpd.read_file(geojson_path)
 
-    print(f"Loaded {len(gdf)} features from {geojson_path}")
-    print(f"Available columns: {list(gdf.columns)}")
-
     # Apply filters if specified
     if filter_country:
         country_fields = [
