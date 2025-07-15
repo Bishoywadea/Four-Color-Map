@@ -15,7 +15,11 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import pygame
+import logging
 from view.config import Config
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 class Button:
@@ -48,7 +52,7 @@ class Button:
                 self.icon_image, (icon_size, icon_size))
 
         except pygame.error as e:
-            print(f"Could not load icon {self.icon_path}: {e}")
+            logger.error(f"Could not load icon {self.icon_path}: {e}")
             self.icon_image = None
 
     def handle_event(self, event):

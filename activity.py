@@ -15,6 +15,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
+import logging
+logger = logging.getLogger(__name__)
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf, Gdk
@@ -282,12 +285,9 @@ class FourColorMap(Activity):
         # Draw border
         cr.set_source_rgb(0, 0, 0)
         cr.set_line_width(2)
-        cr.rectangle(1, 1, allocation.width - 2, allocation.height - 2)
-        cr.stroke()
-
     def _refresh_color_palette(self):
         """Refresh the color palette with new colors"""
-        print(
+        logger.debug(
             f"DEBUG: Refreshing color palette. Current colors: {
                 Config.GAME_COLORS}")
 
@@ -302,8 +302,9 @@ class FourColorMap(Activity):
             self.color_button = self._create_color_palette_button()
             toolbar.insert(self.color_button, position)
             self.color_button.show()
-
-            print("DEBUG: Color palette refreshed with new colors")
+            logger.debug(
+                f"DEBUG: New color palette created with colors: {
+                    Config.GAME_COLORS}")
 
     def _color_selected_cb(self, button, color_index, color, color_button):
         """Handle color selection"""
@@ -468,44 +469,39 @@ class FourColorMap(Activity):
         import json
         import os
 
-        print("[DEBUG] read_file() called")
-        print(f"[DEBUG] File path: {file_path}")
+        logger.debug(f"read_file() called with path: {file_path}")
+        logger.debug(f"File path: {file_path}")
 
         if not os.path.exists(file_path):
-            print(f"[DEBUG] File does not exist: {file_path}")
+            logger.debug(
+                f"[DEBUG] File does not exist: {file_path}")
             return
 
         if not self.game:
-            print("[DEBUG] ERROR: self.game is None, cannot read file")
+            logger.debug(
+                "[DEBUG] ERROR: self.game is None, cannot read file")
             return
 
         try:
             with open(file_path, 'r') as f:
                 save_data = json.load(f)
 
-            print(
-                f"[DEBUG] Loaded save data with keys: {
-                    list(
-                        save_data.keys())}")
-            print(
-                f"[DEBUG] Save file version: {
-                    save_data.get(
-                        'version',
-                        'Unknown')}")
-            print(
-                f"[DEBUG] Saved game state: {
-                    save_data.get(
-                        'game_state',
-                        'Unknown')}")
+            logger.debug(
+                f"[DEBUG] Loaded save data with keys: {list(save_data.keys())}")
+            logger.debug(
+                f"[DEBUG] Current game state: {save_data.get('game_state', 'Not found')}"
+            )
+            logger.debug(
+                f"[DEBUG] Regions to restore: {len(save_data.get('regions', {}))}"
+            )
 
             # Restore color configuration if present
             if 'color_config' in save_data:
                 from view.config import Config
                 Config.GAME_COLORS = [
                     tuple(color) for color in save_data['color_config']]
-                print(
-                    f"[DEBUG] Restored {len(Config.GAME_COLORS)} custom colors"
-                )
+                logger.debug(
+                    f"[DEBUG] Restored color configuration: {Config.GAME_COLORS}")
 
             # Check if we have a playing state to restore
             if (save_data.get('game_state') == 'playing'
@@ -513,8 +509,9 @@ class FourColorMap(Activity):
                 playing_state = save_data['playing_state']
                 level_info = playing_state['level']
 
-                print(f"[DEBUG] Restoring game - Level: {level_info['name']}")
-                print(
+                logger.debug(
+                    f"[DEBUG] Restoring game - Level: {level_info['name']}")
+                logger.debug(
                     f"[DEBUG] Regions to restore: "
                     f"{len(playing_state.get('regions', {}))}"
                 )
@@ -537,7 +534,9 @@ class FourColorMap(Activity):
 
                 if level_to_load:
                     # Start the level
-                    print(f"[DEBUG] Loading level: {level_to_load['name']}")
+                    logger.debug(
+                        f"[DEBUG] Level to load: {level_to_load['name']}, "
+                        f"index: {level_index}")
                     self.game.start_level(level_to_load)
 
                     # Restore the game state after level is loaded
@@ -549,10 +548,9 @@ class FourColorMap(Activity):
                             if region_id in self.game.map_frame.regions:
                                 color = tuple(region_data['color'])
                                 self.game.map_frame.regions[region_id].color = color
-                                print(
+                                logger.debug(
                                     f"[DEBUG] Restored color for region {region_id}: "
-                                    f"{color}"
-                                )
+                                    f"{color}")
 
                         # Restore view state
                         if 'view' in playing_state:
@@ -563,10 +561,9 @@ class FourColorMap(Activity):
                                 'offset_x', 0)
                             self.game.map_frame.pan_offset[1] = view.get(
                                 'offset_y', 0)
-                            print(
-                                f"[DEBUG] Restored view - zoom: {
-                                    self.game.map_frame.zoom_level}, offset: {
-                                    self.game.map_frame.pan_offset}")
+                            logger.debug(
+                                f"[DEBUG] Restored view - zoom: {self.game.map_frame.zoom_level}, "
+                                f"offset: {self.game.map_frame.pan_offset}")
 
                     # Restore game properties
                     self.game.selected_color = playing_state.get(
@@ -585,9 +582,9 @@ class FourColorMap(Activity):
                         import time
                         self.game.start_time = time.time(
                         ) - playing_state['start_time_offset']
-                        print(
-                            f"[DEBUG] Restored elapsed time: {
-                                playing_state['start_time_offset']} seconds")
+                        logger.debug(
+                            f"[DEBUG] Restored start time: {self.game.start_time}"
+                        )
 
                     if playing_state.get('completion_time') is not None:
                         self.game.completion_time = self.game.start_time + \
@@ -597,43 +594,45 @@ class FourColorMap(Activity):
                     if hasattr(self.game, 'update_ui'):
                         self.game.update_ui()
 
-                    print("[DEBUG] Game state restored successfully")
-                    print("[DEBUG] Read operation: SUCCESS")
+                    logger.debug(
+                        "[DEBUG] Game state restored successfully")
+                    logger.debug("[DEBUG] Read operation: SUCCESS")
                 else:
-                    print(
-                        f"[DEBUG] ERROR: Could not find level '{
-                            level_info['name']}'")
-                    print("[DEBUG] Read operation: FAILED")
+                    logger.debug(
+                        f"[DEBUG] ERROR: Could not find level '{level_info['name']}'")
+                    logger.debug(
+                        "[DEBUG] Read operation: FAILED - Level not found")
             else:
-                print("[DEBUG] No playing state to restore")
-                print("[DEBUG] Read operation: SUCCESS (nothing to restore)")
+                logger.debug(
+                    "[DEBUG] Game state is not 'playing' or no playing state found")
+                logger.debug(
+                    "[DEBUG] Read operation: SUCCESS - No playing state found")
 
         except json.JSONDecodeError as e:
-            print(f"[DEBUG] ERROR: Invalid JSON in save file - {e}")
-            print("[DEBUG] Read operation: FAILED")
+            logger.debug(
+                f"[DEBUG] JSONDecodeError: {type(e).__name__}: {e}")
+            logger.debug("[DEBUG] Read operation: FAILED - JSON decode error")
         except Exception as e:
-            print(
+            logger.debug(
                 f"[DEBUG] ERROR: Unexpected error reading journal - "
-                f"{type(e).__name__}: {e}"
-            )
+                f"{type(e).__name__}: {e}")
             import traceback
-            print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-            print("[DEBUG] Read operation: FAILED")
+            logger.debug(
+                f"[DEBUG] Traceback: {traceback.format_exc()}")
+            logger.debug("[DEBUG] Read operation: FAILED")
 
     def write_file(self, file_path):
         """Write game state to journal"""
         import json
         import os
-
-        print("[DEBUG] write_file() called")
-        print(f"[DEBUG] File path: {file_path}")
-        print(
-            f"[DEBUG] Directory exists: {
-                os.path.exists(
-                    os.path.dirname(file_path))}")
+        logger.debug(f"write_file() called with path: {file_path}")
+        logger.debug(f"File path: {file_path}")
+        logger.debug(
+            f"Directory exists: {os.path.exists(os.path.dirname(file_path))}")
 
         if not self.game:
-            print("[DEBUG] ERROR: self.game is None, cannot write file")
+            logger.debug(
+                "[DEBUG] ERROR: self.game is None, cannot write file")
             return
 
         save_data = None
@@ -644,62 +643,58 @@ class FourColorMap(Activity):
             save_data = self.game.get_save_data()
 
             if not save_data:
-                print("[DEBUG] ERROR: get_save_data() returned None or empty")
+                logger.debug(
+                    "[DEBUG] ERROR: get_save_data() returned None or empty")
                 return
 
-            print(f"[DEBUG] Got save data with keys: {list(save_data.keys())}")
-            print(
-                f"[DEBUG] Current game state: {
-                    save_data.get(
-                        'game_state',
-                        'Not found')}")
+            logger.debug(
+                f"[DEBUG] Got save data with keys: {list(save_data.keys())}")
 
             if 'playing_state' in save_data:
                 ps = save_data['playing_state']
-                print(
-                    f"[DEBUG] Playing state - Level: "
-                    f"{ps.get('level', {}).get('name', 'Unknown')}"
+                logger.debug(
+                    f"[DEBUG] Playing state - Level index: "
+                    f"{ps.get('level', {}).get('level_index', -1)}"
                 )
-                print(
-                    f"[DEBUG] Playing state - Regions colored: "
-                    f"{len(ps.get('regions', {}))}"
+                logger.debug(
+                    f"[DEBUG] Playing state - Selected color: "
+                    f"{ps.get('selected_color', 'Not set')}"
                 )
 
             # Convert to JSON
             json_data = json.dumps(save_data, indent=2)
-            print(f"[DEBUG] JSON data size: {len(json_data)} characters")
 
             # Write to file
             with open(file_path, 'w') as f:
                 bytes_written = f.write(json_data)
-                print(f"[DEBUG] Wrote {bytes_written} characters to file")
+                logger.debug(
+                    f"[DEBUG] Successfully wrote save data to {file_path}")
 
             # Verify the write
             if os.path.exists(file_path):
                 file_size = os.path.getsize(file_path)
-                print(
-                    f"[DEBUG] File successfully written, size: "
-                    f"{file_size} bytes"
+                
+                logger.debug(
+                    f"[DEBUG] File successfully written, size: {file_size} bytes"
                 )
-                print("[DEBUG] Write operation: SUCCESS")
             else:
-                print("[DEBUG] ERROR: File does not exist after write!")
-                print("[DEBUG] Write operation: FAILED")
+                logger.debug(
+                    "[DEBUG] ERROR: File does not exist after write!")
 
         except IOError as e:
-            print(f"[DEBUG] ERROR: Could not write file - {e}")
-            print("[DEBUG] Write operation: FAILED")
+            logger.debug(
+                f"[DEBUG] IOError: {type(e).__name__}: {e}")
+            logger.debug("[DEBUG] Write operation: FAILED - IOError")
         except Exception as e:
-            print(
+            logger.debug(
                 f"[DEBUG] ERROR: Unexpected error writing journal - "
-                f"{type(e).__name__}: {e}"
-            )
+                f"{type(e).__name__}: {e}")
             if save_data is not None:
-                print("[DEBUG] save_data was successfully retrieved")
+                logger.debug(
+                    f"[DEBUG] save_data keys: {list(save_data.keys())}")
             else:
-                print("[DEBUG] save_data was not retrieved before error")
-            print("[DEBUG] Traceback: {traceback.format_exc()}")
-            print("[DEBUG] Write operation: FAILED")
+                logger.debug(
+                    f"[DEBUG] Traceback: {e.__traceback__}")
 
     def close(self):
         import os

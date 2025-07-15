@@ -17,15 +17,17 @@
 
 import pygame
 import sys
+import logging
 from logic.game_manager import GameManager
 from view.config import Config
 import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-
 from gettext import gettext as _
 
+# Configure logger
+logger = logging.getLogger(__name__)
 
 class main:
     def __init__(self, journal=True):
@@ -58,13 +60,14 @@ class main:
 
     def get_save_data(self):
         """Get the current game state as a dictionary for saving"""
-        print("[DEBUG] get_save_data() called")
+        logger.debug("[DEBUG] Preparing save data")
+
 
         if not self.game:
-            print("[DEBUG] ERROR: self.game is None in get_save_data")
+            logger.debug("[DEBUG] ERROR: self.game is None in get_save_data")   
             return {}
 
-        print(f"[DEBUG] Current game state: {self.game.current_state}")
+        logger.debug(f"[DEBUG] Current game state: {self.game.current_state}")  
 
         save_data = {
             'version': 1,
@@ -77,10 +80,9 @@ class main:
             # Import here to avoid circular import
             from view.map_data import LEVELS
 
-            print("[DEBUG] Saving playing state")
-            print(f"[DEBUG] Current level: {self.game.current_level['name']}")
-            print(f"[DEBUG] Game completed: {self.game.game_completed}")
-            print(f"[DEBUG] Puzzle valid: {self.game.puzzle_valid}")
+            logger.debug(f"[DEBUG] Selected color: {self.game.selected_color}")
+            logger.debug(f"[DEBUG] Eraser mode: {self.game.eraser_mode}")
+            logger.debug(f"[DEBUG] Action history length: {len(self.game.action_history)}")
 
             save_data['playing_state'] = {
                 'level': {
@@ -109,10 +111,8 @@ class main:
                         }
                         colored_regions += 1
 
-                print(
-                    f"[DEBUG] Saving {colored_regions} colored regions out of {
-                        len(
-                            self.game.map_frame.regions)} total")
+                logger.debug(
+                    f"[DEBUG] Saving {colored_regions} colored regions out of {len(self.game.map_frame.regions)} total")
 
                 # Save zoom and pan state
                 save_data['playing_state']['view'] = {
@@ -120,17 +120,18 @@ class main:
                     'offset_x': self.game.map_frame.pan_offset[0],
                     'offset_y': self.game.map_frame.pan_offset[1]
                 }
-                print(
-                    f"[DEBUG] Saving view state - zoom: {self.game.map_frame.zoom_level}")
+
+                logger.debug(
+                    f"[DEBUG] Saving view state - zoom: {self.game.map_frame.zoom_level}, "
+                    f"offset: {self.game.map_frame.pan_offset}")
         else:
-            print("[DEBUG] Not in playing state or no current level")
+            logger.debug("[DEBUG] Not in playing state or no current level")
 
         # Save color configuration
         save_data['color_config'] = [list(color)
                                      for color in Config.GAME_COLORS]
-        print(f"[DEBUG] Saving {len(Config.GAME_COLORS)} custom colors")
-
-        print("[DEBUG] Save data prepared successfully")
+        logger.debug(f"[DEBUG] Color configuration: {save_data['color_config']}")
+        logger.debug(f"[DEBUG] Save data keys: {list(save_data.keys())}")
         return save_data
 
     def load_from_journal(self, save_data):
@@ -138,64 +139,66 @@ class main:
         import time
         from view.map_data import LEVELS
 
-        print("[DEBUG] load_from_journal() called")
-        print(
-            f"[DEBUG] Save data keys: {
-                list(
-                    save_data.keys()) if save_data else 'None'}")
+        logger.debug("[DEBUG] Loading game state from journal data")
+        logger.debug(
+            f"[DEBUG] Save data keys: {list(save_data.keys()) if save_data else 'None'}")
 
         if not save_data:
-            print("[DEBUG] ERROR: No save data provided")
+            logger.debug("[DEBUG] No save data provided")
             return
 
         if not self.game:
-            print("[DEBUG] ERROR: self.game is None")
+            logger.debug("[DEBUG] ERROR: self.game is None in load_from_journal")
             return
 
         # Restore color configuration
         if 'color_config' in save_data:
             Config.GAME_COLORS = [tuple(color)
                                   for color in save_data['color_config']]
-            print("[DEBUG] Restored {len(Config.GAME_COLORS)} custom colors")
+            logger.debug(   
+                f"[DEBUG] Restored {len(Config.GAME_COLORS)} custom colors: {Config.GAME_COLORS}")
 
             # Refresh the activity's color palette if available
             if self.activity:
                 self.activity._refresh_color_palette()
-                print("[DEBUG] Refreshed activity color palette")
+                logger.debug("[DEBUG] Refreshed activity color palette")
 
         # Check if we were playing a level
         saved_state = save_data.get('game_state')
-        print(f"[DEBUG] Saved game state: {saved_state}")
+        logger.debug(f"[DEBUG] Saved game state: {saved_state}")
 
         if saved_state == self.game.STATE_PLAYING and 'playing_state' in save_data:
             playing_state = save_data['playing_state']
             level_name = playing_state['level'].get('name', 'Unknown')
-            print(f"[DEBUG] Loading playing state for level: {level_name}")
+            logger.debug(
+                f"[DEBUG] Playing state keys: {list(playing_state.keys()) if playing_state else 'None'}")
 
             # Find and load the level
             level_index = playing_state['level'].get('level_index', -1)
-            print(f"[DEBUG] Level index: {level_index}")
+            logger.debug(f"[DEBUG] Level name: {level_name}")
 
             if level_index >= 0 and level_index < len(LEVELS):
                 level = LEVELS[level_index]
-                print(f"[DEBUG] Found level: {level['name']}")
+                logger.debug(
+                    f"[DEBUG] Restoring level {level_index}: {level['name']}")
 
                 # Start the level
                 self.game.start_level(level)
-                print("[DEBUG] Started level")
+                logger.debug(
+                    f"[DEBUG] Restored level: {level['name']} (index {level_index})")
 
                 # Restore timing
                 if playing_state.get('start_time_offset'):
                     self.game.start_time = time.time(
                     ) - playing_state['start_time_offset']
-                    print(
-                        f"[DEBUG] Restored elapsed time: {
-                            playing_state['start_time_offset']} seconds")
+                    logger.debug(
+                        f"[DEBUG] Restored start time: {self.game.start_time}")
 
                 if playing_state.get('completion_time') is not None:
                     self.game.completion_time = self.game.start_time + \
                         playing_state['completion_time']
-                    print("[DEBUG] Restored completion time")
+                    logger.debug(
+                        f"[DEBUG] Restored completion time: {self.game.completion_time}")
 
                 # Restore game state
                 self.game.game_completed = playing_state.get(
@@ -208,10 +211,10 @@ class main:
                 self.game.action_history = playing_state.get(
                     'action_history', [])
 
-                print(
-                    f"[DEBUG] Restored game flags - completed: {
-                        self.game.game_completed}, valid: {
-                        self.game.puzzle_valid}")
+                logger.debug(
+                    f"[DEBUG] Restored game flags - completed: {self.game.game_completed}, "
+                    f"valid: {self.game.puzzle_valid}, selected color: {self.game.selected_color}, "
+                    f"eraser mode: {self.game.eraser_mode}, action history length: {len(self.game.action_history)}")
 
                 # Restore region colors
                 if self.game.map_frame and 'regions' in playing_state:
@@ -224,8 +227,8 @@ class main:
                             self.game.map_frame.regions[region_id].set_color(
                                 color)
                             restored_regions += 1
-                    print(
-                        f"[DEBUG] Restored colors for {restored_regions} regions")
+                    logger.debug(
+                        f"[DEBUG] Restored colors for {restored_regions} regions out of {len(self.game.map_frame.regions)} total")
 
                 # Restore view state
                 if self.game.map_frame and 'view' in playing_state:
@@ -234,27 +237,32 @@ class main:
                         'zoom_level', 1.0)
                     self.game.map_frame.offset_x = view.get('offset_x', 0)
                     self.game.map_frame.offset_y = view.get('offset_y', 0)
-                    print(
-                        f"[DEBUG] Restored view state - zoom: {self.game.map_frame.zoom_level}")
+
+                    logger.debug(
+                        f"[DEBUG] Restored view state - zoom: {self.game.map_frame.zoom_level}, "
+                        f"offset: ({self.game.map_frame.offset_x}, {self.game.map_frame.offset_y})")
 
                 # Regenerate completion effects if puzzle was completed
                 if self.game.game_completed and self.game.puzzle_valid:
                     self.game.generate_completion_stars()
-                    print("[DEBUG] Regenerated completion stars")
+                    logger.debug(
+                        "[DEBUG] Puzzle was completed, generated completion stars")
 
                 # Update toolbar state
                 if self.activity and hasattr(self.activity, 'eraser_button'):
                     self.activity.eraser_button.set_active(
                         self.game.eraser_mode)
-                    print("[DEBUG] Updated toolbar eraser state")
+                    logger.debug(
+                        "[DEBUG] Updated toolbar eraser state to match game state")
 
-                print("[DEBUG] Successfully restored game state")
+                logger.debug("[DEBUG] Game state restoration complete")
             else:
-                print(f"[DEBUG] ERROR: Invalid level index {level_index}")
+                logger.debug(
+                    f"[DEBUG] ERROR: Invalid level index {level_index} - ")
         else:
             # If not in playing state, just stay at the menu
             self.game.current_state = self.game.STATE_MENU
-            print("[DEBUG] No playing state to restore, staying at menu")
+            logger.debug("[DEBUG] No playing state to restore, staying at menu")
 
     def quit(self):
         self.running = False
