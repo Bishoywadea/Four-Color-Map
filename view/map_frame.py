@@ -104,28 +104,24 @@ class MapFrame:
         return (screen_x, screen_y)
 
     def handle_zoom(self, event):
-        """Handle mouse wheel zoom."""
-        if event.type == pygame.MOUSEWHEEL:
-            # Get mouse position for zoom center
-            mouse_pos = pygame.mouse.get_pos()
-            world_pos_before = self.screen_to_world(mouse_pos)
+        """Handle mouse wheel zoom using older pygame mouse button events."""
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 4 or event.button == 5:  # Mouse wheel
+                mouse_pos = pygame.mouse.get_pos()
+                world_pos_before = self.screen_to_world(mouse_pos)
 
-            # Update zoom level
-            if event.y > 0:  # Zoom in
-                self.zoom_level = min(
-                    self.zoom_level + self.zoom_speed, self.max_zoom)
-            else:  # Zoom out
-                self.zoom_level = max(
-                    self.zoom_level - self.zoom_speed, self.min_zoom)
+                if event.button == 4:  # Scroll up - zoom in
+                    self.zoom_level = min(self.zoom_level + self.zoom_speed, self.max_zoom)
+                elif event.button == 5:  # Scroll down - zoom out
+                    self.zoom_level = max(self.zoom_level - self.zoom_speed, self.min_zoom)
 
-            # Adjust pan to keep mouse position fixed
-            world_pos_after = self.screen_to_world(mouse_pos)
-            dx = (world_pos_before[0] - world_pos_after[0]) * self.zoom_level
-            dy = (world_pos_before[1] - world_pos_after[1]) * self.zoom_level
-            self.pan_offset[0] += dx
-            self.pan_offset[1] += dy
+                world_pos_after = self.screen_to_world(mouse_pos)
+                dx = (world_pos_before[0] - world_pos_after[0]) * self.zoom_level
+                dy = (world_pos_before[1] - world_pos_after[1]) * self.zoom_level
+                self.pan_offset[0] += dx
+                self.pan_offset[1] += dy
 
-            return True
+                return True
         return False
 
     def handle_pan(self, event):
