@@ -145,11 +145,9 @@ class FourColorMap(Activity):
         separator.show()
 
         # Stop button
-        stop_button = StopButton(self)
-        toolbar_box.toolbar.insert(stop_button, -1)
-        stop_button.show()
-
-        self.show_all()
+        self.stop_button = StopButton(self)
+        toolbar_box.toolbar.insert(self.stop_button, -1)
+        self.stop_button.show()
 
     def _create_color_palette_button(self):
         """Create a color button with palette that updates dynamically"""
