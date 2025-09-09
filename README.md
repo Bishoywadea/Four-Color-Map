@@ -25,30 +25,16 @@ The **Four Color Map Puzzle** is a fun and educational game based on the famous 
 
 ---
 
-## How to Use?
+## How to Use
 
-The Four Color Map Puzzle game is designed for the Sugar desktop environment. To get started:
+For a step-by-step walkthrough, see the official documentation on installing activities:
 
-- [Get Sugar from sugarlabs.org](https://sugarlabs.org/)
-- [Learn how to use Sugar](https://help.sugarlabs.org/)
+[How to Install Activities – Sugar Labs Wiki](https://wiki.sugarlabs.org/go/How_to_install_activities)
 
----
+Alternatively, for development or testing purposes, you may clone or copy the activity directory into your `~/Activities` folder and then restart Sugar to have it appear in the activity ring:
 
-## How to Run?
-
-### Dependencies:
-- Python 
-- PyGame
-
-Make sure these are installed on your system (Debian, Ubuntu, Fedora, etc.).
-
----
-
-### Running outside Sugar:
-
-1. Install the dependencies.
-2. Clone the repository and run:
 ```bash
-git clone https://github.com/Bishoywadea/Four-Color-Map
-cd Four-Color-Map
-sudo python3 setup.py install
+git clone <repository-url> ~/Activities/<activity-name>
+
+cp -r /path/to/local/activity ~/Activities/
+```

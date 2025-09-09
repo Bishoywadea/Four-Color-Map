@@ -77,14 +77,6 @@ class FourColorMap(Activity):
         toolbar_box.toolbar.insert(self.color_button, -1)
         self.color_button.show()
 
-        # Color set customization button
-        self.customize_colors_button = ToolButton('preferences-system')
-        self.customize_colors_button.set_tooltip(_('Customize color set'))
-        self.customize_colors_button.connect(
-            'clicked', self._customize_colors_cb)
-        toolbar_box.toolbar.insert(self.customize_colors_button, -1)
-        self.customize_colors_button.show()
-
         # Eraser button
         self.eraser_button = ToggleToolButton('edit-clear')
         self.eraser_button.set_tooltip(_('Eraser'))
@@ -135,7 +127,7 @@ class FourColorMap(Activity):
         self.help_button.set_tooltip(_('Help'))
         self.help_button.connect('clicked', self._help_cb)
         toolbar_box.toolbar.insert(self.help_button, -1)
-        self.menu_button.show()
+        self.help_button.show()
 
         # Separator before stop button
         separator = Gtk.SeparatorToolItem()
@@ -305,42 +297,6 @@ class FourColorMap(Activity):
         color_button.palette.popdown()
 
         self.eraser_button.set_active(False)
-
-    def _customize_colors_cb(self, button):
-        """Open color customization dialog"""
-        # Check if a game is in progress
-        if (hasattr(self.game, 'game') and self.game.game and
-                self.game.game.current_state == self.game.game.STATE_PLAYING):
-
-            # Check if any region has been colored
-            has_colored_regions = False
-            if self.game.game.map_frame:
-                for region in self.game.game.map_frame.regions.values():
-                    if region.color is not None:
-                        has_colored_regions = True
-                        break
-
-            if has_colored_regions:
-                # Show warning dialog
-                if hasattr(self.game, 'show_color_warning'):
-                    self.game.show_color_warning = True
-                return
-
-        # If no game in progress or no regions colored, allow color
-        # customization
-        dialog = ColorCustomizationDialog(self)
-        response = dialog.run()
-
-        if response == Gtk.ResponseType.OK:
-            # Colors were changed, refresh the palette
-            self._refresh_color_palette()
-
-            # Notify the game to update any cached colors
-            if self.game and self.game.game:
-                # Force a redraw with new colors
-                self.game.game.refresh_colors()
-
-        dialog.destroy()
 
     def _eraser_toggled_cb(self, button):
         """Handle eraser toggle"""
