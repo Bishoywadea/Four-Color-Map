@@ -709,10 +709,10 @@ class FourColorMap(activity.Activity):
             header_box.set_spacing(style.DEFAULT_SPACING)
             
             if is_success:
-                title_text = "🎉 Puzzle Complete! 🎉"
+                title_text = "Puzzle Complete!"
                 dialog.set_title("Success!")
             else:
-                title_text = "⚠️ Color Conflict! ⚠️"
+                title_text = "Color Conflict!"
                 dialog.set_title("Try Again")
             
             title_label = Gtk.Label()
@@ -1006,25 +1006,25 @@ class FourColorMap(activity.Activity):
 
     def _help_cb(self, button):
         """Show help dialog"""
-        help_message = """🗺️ Four Color Map Puzzle Help
+        help_message = """Four Color Map Puzzle Help
 
-    🎯 Goal: 
+    Goal: 
     Color all regions on the map using only 4 colors, making sure no adjacent regions share the same color.
 
-    🎮 How to Play:
+    How to Play:
     • Click on a region to color it with the selected color
     • Use the color palette in the toolbar to choose colors
     • Use the eraser to remove colors from regions
     • Pan around large maps by holding middle mouse button and dragging
     • Use zoom controls to get a better view of detailed areas
 
-    🏆 Tips:
+    Tips:
     • Plan ahead - some regions have many neighbors!
     • The four-color theorem guarantees every map can be colored with just 4 colors
     • Use the undo button if you make a mistake
     • Clear the entire map to start over
 
-    🎨 Controls:
+    Controls:
     • Left click: Color region
     • Middle click + drag: Pan map
     • Eraser tool: Remove colors
